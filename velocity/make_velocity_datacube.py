@@ -4,21 +4,24 @@ import numpy as np
 
 # Invert for velocity
 xy = (-3310000, 257700)
+t0 = "2015-10-01"
+t1 = "2023-01-01"
+
 solu, res, xsub, mask = itsinv.grid_inversion_ncpu(
     xy,
     half_dist=6000,
     lt=1e-4,
     lx=10,
     sat_filt=["1A", "1B", "4", "5", "7", "8", "9"],
-    start_date="2015-10-01",
-    stop_date="2023-01-01",
+    start_date=t0,
+    stop_date=t1,
     pbar=True,
     return_data=True,
-    ncpu=8
+    ncpu=4
 )
 
 # Save itslive datacube
-xsub.to_netcdf("hubbard_itslive.nc")
+xsub.to_netcdf("hubbard_itslive_%s_%s.nc" % (t0, t1))
 
 # Convert decimal year to datetime64
 s_in_year = (60*60*24*365)
@@ -44,4 +47,4 @@ xres = xarray.Dataset(
         GDAL_AREA_OR_POINT = xsub.GDAL_AREA_OR_POINT,
     ))
 
-xres.to_netcdf("hubbard_vinv_2015-10-01_2023-01-01.nc")
+xres.to_netcdf("hubbard_inversion_%s_%s.nc" % (t0, t1))
