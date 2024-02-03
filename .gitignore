@@ -161,3 +161,6 @@ cython_debug/
 
 # NETCDF Files
 *.nc
+
+# DS_Store
+.DS_Store
