@@ -97,12 +97,12 @@ def solve_stencil(args):
     """
     Helper function for grid_inversion_ncpu. Wraps logic for five point stencil
     inversion of velocity for a single grid cell (involving its neighbors as well).
-    
+
     Parameters
     ----------
     args - list of arguments for this function, must be this way to use with imap
            ((i,j), vx_mask, vy_mask, aq1, aq2, solu_dates, lt, lx, dx)
-           
+
     Returns
     -------
     (i,j) - grid cell indices
@@ -118,7 +118,7 @@ def solve_stencil(args):
     lt = args[6]
     lx = args[7]
     dx = args[8]
-    
+
     cell = {}
     for comp, vgrid in [("vx", vx_mask), ("vy", vy_mask)]:
         # Get unique dates in 5 point stencil
@@ -134,7 +134,13 @@ def solve_stencil(args):
         sub_aq1 = aq1[sub_mask]
         sub_aq2 = aq2[sub_mask]
         sub_uniq_aq = np.unique(np.append(sub_aq1, sub_aq2))
-        sub_solu_dates = (sub_uniq_aq[:-1] + sub_uniq_aq[1:]) / 2    
+        sub_solu_dates = (sub_uniq_aq[:-1] + sub_uniq_aq[1:]) / 2
+
+        if(len(sub_solu_dates) < 3):
+            cell = {}
+            cell["vx"] = np.zeros(len(solu_dates))
+            cell["vx"] = np.zeros(len(solu_dates))
+            return (args[0], cell)
 
         # Set up linear systems
         As = []
