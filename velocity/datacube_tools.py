@@ -1,15 +1,18 @@
 # to get and use geojson datacube catalog
 import json
 import logging
+
 # for timing data access
 import time
 
 import numpy as np
 import pyproj
 import s3fs as s3
+
 # for datacube xarray/zarr access
 import xarray as xr
 from pyproj import Transformer
+
 # for plotting time series
 from shapely import geometry
 
@@ -320,9 +323,9 @@ class DATACUBETOOLS:
         smallcube_gt[3] = smallcube.y.max().item() - (
             smallcube_gt[5] / 2.0
         )  # set new ul y value
-        smallcube[
-            "mapping"
-        ] = largecube.mapping  # still need to add new GeoTransform as string
+        smallcube["mapping"] = (
+            largecube.mapping
+        )  # still need to add new GeoTransform as string
         smallcube.mapping["GeoTransform"] = " ".join([str(x) for x in smallcube_gt])
         return
 

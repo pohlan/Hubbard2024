@@ -1,11 +1,15 @@
-import numpy as np
-import datacube_tools
-import scipy.sparse
-import scipy.interpolate
-import tqdm
-import warnings
 import multiprocessing
+import warnings
+
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.interpolate
+import scipy.sparse
+import tqdm
+import xarray
+
+import datacube_tools
+
 
 def single_point_inversion(
     xy, lt, sat_filt=None, start_date=None, stop_date=None, return_data=False
@@ -54,6 +58,10 @@ def single_point_inversion(
     # Build mask
     mask = build_mask(xpnt, sat_filt, start_date, stop_date)
 
+    # Apply mask to velocity grid
+    vx_mask = xpnt["vx"][mask].to_numpy()[:, np.newaxis, np.newaxis]
+    vy_mask = xpnt["vy"][mask].to_numpy()[:, np.newaxis, np.newaxis]
+
     # Get masked dates, converting to decimal year
     ns_in_year = 1e9 * 60 * 60 * 24 * 365
     epoch_year = 2000
@@ -73,34 +81,106 @@ def single_point_inversion(
     # Solution dates
     solu_dates = (uniq_aq[:-1] + uniq_aq[1:]) / 2
 
+    _, result = solve_point(((0, 0), vx_mask, vy_mask, aq1, aq2, solu_dates, lt))
+
+    # Decimal year to datetime64
+    s_in_year = 60 * 60 * 24 * 365
+    solu_datetime = [None] * len(solu_dates)
+    for i in range(len(solu_dates)):
+        whole_year = int(solu_dates[i])
+        frac_year = solu_dates[i] - whole_year
+        solu_datetime[i] = np.datetime64(str(whole_year))
+        solu_datetime[i] += np.timedelta64(int(frac_year * s_in_year), "s")
+
+    # Package into xarray
+    xres = xarray.Dataset(
+        data_vars=dict(
+            vx=(["time"], result["vx"]),
+            vy=(["time"], result["vy"]),
+        ),
+        coords=dict(
+            x=xpnt.x,
+            y=xpnt.y,
+            time=solu_datetime,
+        ),
+        attrs=dict(
+            projection=xpnt.projection,
+            GDAL_AREA_OR_POINT=xpnt.GDAL_AREA_OR_POINT,
+        ),
+    )
+
+    if return_data:
+        return xres, xpnt, mask
+    else:
+        return xres
+
+
+def solve_point(args):
+    """
+    Inverts for the velocity time series of a single cell.
+
+    Parameters
+    ----------
+    args - list of arguments for this function, must be this way to use with imap (sorry).
+           ((i,j), vx_mask, vy_mask, aq1, aq2, solu_dates, lt)
+
+    Returns
+    -------
+    (i,j) - grid cell indices
+    cell - vx and vy solutions for the grid cell
+    """
+    # Unpack arguments
+    i, j = args[0]
+    vx_mask = args[1]
+    vy_mask = args[2]
+    aq1 = args[3]
+    aq2 = args[4]
+    solu_dates = args[5]
+    lt = args[6]
+
     # Invert each component
-    result = {}
-    for comp in ["vx", "vy"]:
+    cell = {}
+    for comp, vgrid in [("vx", vx_mask), ("vy", vy_mask)]:
+        # Get unique dates at point
+        sub_mask = np.logical_not(np.isnan(vgrid[:, i, j]))
+
+        sub_aq1 = aq1[sub_mask]
+        sub_aq2 = aq2[sub_mask]
+        sub_uniq_aq = np.unique(np.append(sub_aq1, sub_aq2))
+        sub_solu_dates = (sub_uniq_aq[:-1] + sub_uniq_aq[1:]) / 2
+
+        # Quit if there are not enough dates for time regularization to work
+        if len(sub_solu_dates) < 3:
+            cell = {}
+            cell["vx"] = np.zeros(len(solu_dates))
+            cell["vx"] = np.zeros(len(solu_dates))
+            return (args[0], cell)
+
         # Set up linear system
-        A, b = gen_vel_sys(xpnt[comp][mask].to_numpy(), aq1, aq2, uniq_aq)
+        A, b = gen_vel_sys(vgrid[sub_mask, i, j], sub_aq1, sub_aq2, sub_uniq_aq)
 
         # Add time regularization
-        treg = gen_time_regu_second_cent(uniq_aq, lt)
+        treg = gen_time_regu_second_cent(sub_uniq_aq, lt)
         Aaug = np.vstack((A, treg))
         baug = np.append(b, np.zeros(treg.shape[0]))
 
         # Solve system
-        result[comp] = np.linalg.lstsq(Aaug, baug, rcond=None)[0]
+        res = np.linalg.lstsq(Aaug, baug, rcond=None)[0]
 
-    if return_data:
-        return solu_dates, result, xpnt, mask
-    else:
-        return solu_dates, result
+        # Interpolate to grid dates
+        spl = scipy.interpolate.CubicSpline(sub_solu_dates, res)
+        cell[comp] = spl(solu_dates)
+
+    return (args[0], cell)
 
 
 def solve_stencil(args):
     """
-    Helper function for grid_inversion_ncpu. Wraps logic for five point stencil
-    inversion of velocity for a single grid cell (involving its neighbors as well).
+    Inverts a 5 point stencil of velocities. Returns the velocity time series of the middle cell.
 
     Parameters
     ----------
-    args - list of arguments for this function, must be this way to use with imap
+    args - list of arguments for this function, must be this way to use with imap (sorry).
            ((i,j), vx_mask, vy_mask, aq1, aq2, solu_dates, lt, lx, dx)
 
     Returns
@@ -109,7 +189,7 @@ def solve_stencil(args):
     cell - vx and vy solutions for the grid cell
     """
     # Unpack arguments
-    i,j = args[0]
+    i, j = args[0]
     vx_mask = args[1]
     vy_mask = args[2]
     aq1 = args[3]
@@ -121,22 +201,26 @@ def solve_stencil(args):
 
     cell = {}
     for comp, vgrid in [("vx", vx_mask), ("vy", vy_mask)]:
+        # Make 5 point stencil
+        pixels = [
+            vgrid[:, i, j],
+            vgrid[:, i, j - 1],
+            vgrid[:, i, j + 1],
+            vgrid[:, i - 1, j],
+            vgrid[:, i + 1, j],
+        ]
+
         # Get unique dates in 5 point stencil
-        sub_mask = np.logical_or.reduce(
-            [
-                np.logical_not(np.isnan(vgrid[:, i, j])),
-                np.logical_not(np.isnan(vgrid[:, i, j - 1])),
-                np.logical_not(np.isnan(vgrid[:, i, j + 1])),
-                np.logical_not(np.isnan(vgrid[:, i - 1, j])),
-                np.logical_not(np.isnan(vgrid[:, i + 1, j])),
-            ]
-        )
+        not_nans = [np.logical_not(np.isnan(pix)) for pix in pixels]
+        sub_mask = np.logical_or.reduce(not_nans)
+
         sub_aq1 = aq1[sub_mask]
         sub_aq2 = aq2[sub_mask]
         sub_uniq_aq = np.unique(np.append(sub_aq1, sub_aq2))
         sub_solu_dates = (sub_uniq_aq[:-1] + sub_uniq_aq[1:]) / 2
 
-        if(len(sub_solu_dates) < 3):
+        # Quit if there are not enough dates for time regularization to work
+        if len(sub_solu_dates) < 3:
             cell = {}
             cell["vx"] = np.zeros(len(solu_dates))
             cell["vx"] = np.zeros(len(solu_dates))
@@ -144,18 +228,10 @@ def solve_stencil(args):
 
         # Set up linear systems
         As = []
-        bs = [None] * 5
-        for k, v in enumerate(
-            [
-                vgrid[:, i, j],
-                vgrid[:, i, j - 1],
-                vgrid[:, i, j + 1],
-                vgrid[:, i - 1, j],
-                vgrid[:, i + 1, j],
-            ]
-        ):
+        bs = [None] * len(pixels)
+        for k, v in enumerate(pixels):
             px_mask = np.logical_not(np.isnan(v))
-            chunk = [None] * 5
+            chunk = [None] * len(pixels)
             chunk[k], bs[k] = gen_vel_sys(
                 v[px_mask], aq1[px_mask], aq2[px_mask], sub_uniq_aq
             )
@@ -163,8 +239,8 @@ def solve_stencil(args):
 
         # Time regularization
         tregs = []
-        for k in range(5):
-            chunk = [None] * 5
+        for k in range(len(pixels)):
+            chunk = [None] * len(pixels)
             chunk[k] = gen_time_regu_second_cent(sub_uniq_aq, lt)
             tregs.append(chunk)
 
@@ -172,11 +248,10 @@ def solve_stencil(args):
         xreg = gen_space_regu_laplacian(sub_uniq_aq, dx, lx)
 
         # Assemble system
+        bs = np.vstack(bs)
         A_sparse = scipy.sparse.bmat(As)
         treg_sparse = scipy.sparse.bmat(tregs)
         Aaug_sparse = scipy.sparse.vstack((A_sparse, treg_sparse, xreg))
-
-        bs = np.vstack(bs)
         baug = np.vstack(
             (
                 bs,
@@ -186,16 +261,16 @@ def solve_stencil(args):
         )[:, 0]
 
         # Solve system
-        res = scipy.sparse.linalg.lsqr(Aaug_sparse, baug)[0][:len(sub_solu_dates)]
+        res = scipy.sparse.linalg.lsqr(Aaug_sparse, baug)[0][: len(sub_solu_dates)]
 
         # Interpolate to grid dates
-        cs = scipy.interpolate.CubicSpline(sub_solu_dates, res)
-        cell[comp] = cs(solu_dates)
+        spl = scipy.interpolate.CubicSpline(sub_solu_dates, res)
+        cell[comp] = spl(solu_dates)
 
     return (args[0], cell)
 
 
-def grid_inversion_ncpu(
+def grid_inversion(
     xy,
     half_dist,
     lt,
@@ -205,7 +280,7 @@ def grid_inversion_ncpu(
     stop_date=None,
     return_data=False,
     pbar=False,
-    ncpu=1
+    ncpu=1,
 ):
     """
     Invert for a velocity timeseries for each cell in a velocity grid. Regularize in time and space.
@@ -231,8 +306,7 @@ def grid_inversion_ncpu(
 
     Returns
     ------
-    solu_dates - mid dates of average velocity solutions
-    result - dictionary of average velocity solutions
+    xres - inverted velocity datacube
     (if return_data)
     xsub - itslive datacube
     mask - mask baded on sat_filt, start, stop
@@ -253,6 +327,11 @@ def grid_inversion_ncpu(
         ],
     )
     xsub = xsub.sortby("mid_date")
+
+    if lx != 0:
+        if np.any(np.array(xsub["vx"].shape[1:]) < 3):
+            print("Grid not large enough for 5 point stencil spatial regularization")
+            exit()
 
     # Build mask
     mask = build_mask(xsub, sat_filt, start_date, stop_date)
@@ -288,194 +367,72 @@ def grid_inversion_ncpu(
 
     # Make list of pixels
     argslist = []
-    dx = np.diff(xsub.x)[0]
-    for i in range(1, vx_mask.shape[1] - 1):
-        for j in range(1, vx_mask.shape[2] - 1):
-            argslist.append(((i,j), vx_mask, vy_mask, aq1, aq2, solu_dates, lt, lx, dx))
+    if lx == 0:
+        dx = 0
+        for i in range(1, vx_mask.shape[1] - 1):
+            for j in range(1, vx_mask.shape[2] - 1):
+                argslist.append(((i, j), vx_mask, vy_mask, aq1, aq2, solu_dates, lt))
+    else:
+        dx = np.diff(xsub.x)[0]
+        for i in range(1, vx_mask.shape[1] - 1):
+            for j in range(1, vx_mask.shape[2] - 1):
+                argslist.append(
+                    ((i, j), vx_mask, vy_mask, aq1, aq2, solu_dates, lt, lx, dx)
+                )
 
     # Run inversions
     with multiprocessing.Pool(ncpu) as p:
-        cells = list(tqdm.tqdm(p.imap(solve_stencil, argslist), total=len(argslist), disable=not pbar))
-        
+        if lx == 0:
+            cells = list(
+                tqdm.tqdm(
+                    p.imap(solve_point, argslist), total=len(argslist), disable=not pbar
+                )
+            )
+        else:
+            cells = list(
+                tqdm.tqdm(
+                    p.imap(solve_stencil, argslist),
+                    total=len(argslist),
+                    disable=not pbar,
+                )
+            )
+
     # Unpack results
     for cell in cells:
         (i, j), res = cell
         for comp, v in res.items():
-            result[comp][:,i,j] = v[:]
+            result[comp][:, i, j] = v[:]
+
+    # Decimal year to datetime64
+    s_in_year = 60 * 60 * 24 * 365
+    solu_datetime = [None] * len(solu_dates)
+    for i in range(len(solu_dates)):
+        whole_year = int(solu_dates[i])
+        frac_year = solu_dates[i] - whole_year
+        solu_datetime[i] = np.datetime64(str(whole_year))
+        solu_datetime[i] += np.timedelta64(int(frac_year * s_in_year), "s")
+
+    # Package into xarray
+    xres = xarray.Dataset(
+        data_vars=dict(
+            vx=(["time", "y", "x"], result["vx"]),
+            vy=(["time", "y", "x"], result["vy"]),
+        ),
+        coords=dict(
+            x=xsub.x,
+            y=xsub.y,
+            time=solu_datetime,
+        ),
+        attrs=dict(
+            projection=xsub.projection,
+            GDAL_AREA_OR_POINT=xsub.GDAL_AREA_OR_POINT,
+        ),
+    )
 
     if return_data:
-        return solu_dates, result, xsub, mask
+        return xres, xsub, mask
     else:
-        return solu_dates, result
-
-
-def grid_inversion(
-    xy,
-    half_dist,
-    lt,
-    lx,
-    sat_filt=None,
-    start_date=None,
-    stop_date=None,
-    return_data=False,
-    pbar=False,
-):
-    """
-    Invert for a velocity timeseries for each cell in a velocity grid. Regularize in time and space.
-    Center point of grid must be supplied in EPSG 3413 coordinates.
-    Accepts restrictions on satellites used (options = ["1A", "1B", "2A", "2B", "4", "5", "7", "8", "9"])
-    example: sat_filt = ["1A", "1B"]
-    Also accepts restrictions on date range. Must be supplied as ISO 8601 compliant string
-    example: start_date = "2018-01-01", stop_date = "2024-01-01"
-
-    Parameters
-    ----------
-    xy - coordinates of grid center in EPSG 3413 (x, y)
-    half_dist - half width of grid in meters
-    lt - time regularization strength
-    lx - space regularization strength
-    sat_filt - list of satellites to use (optional)
-    start_date - start date for inversion (optional)
-    stop_date - stop date for inversion (optional)
-    return_data - option to return itslive data
-    pbar - option to show progress bar
-
-    Returns
-    ------
-    solu_dates - mid dates of average velocity solutions
-    result - dictionary of average velocity solutions
-    (if return_data)
-    xsub - itslive datacube
-    mask - mask baded on sat_filt, start, stop
-    """
-    # Download point date
-    dc = datacube_tools.DATACUBETOOLS()
-    xfull, xsub, xy = dc.get_subcube_around_point(
-        xy,
-        "3413",
-        half_distance=half_dist,
-        variables=[
-            "vx",
-            "vy",
-            "satellite_img1",
-            "satellite_img2",
-            "acquisition_date_img1",
-            "acquisition_date_img2",
-        ],
-    )
-    xsub = xsub.sortby("mid_date")
-
-    # Build mask
-    mask = build_mask(xsub, sat_filt, start_date, stop_date)
-
-    # Get masked dates, converting to decimal year
-    ns_in_year = 1e9 * 60 * 60 * 24 * 365
-    epoch_year = 2015
-    epoch = np.datetime64(str(epoch_year))
-    aq1 = epoch_year + (
-        (xsub["acquisition_date_img1"][mask] - epoch).to_numpy().astype(np.float64)
-        / ns_in_year
-    )
-    aq2 = epoch_year + (
-        (xsub["acquisition_date_img2"][mask] - epoch).to_numpy().astype(np.float64)
-        / ns_in_year
-    )
-
-    # Get unique dates
-    uniq_aq = np.unique(np.append(aq1, aq2))
-
-    # Solution dates
-    solu_dates = (uniq_aq[:-1] + uniq_aq[1:]) / 2
-
-    # Apply mask to velocity grid
-    vx_mask = xsub["vx"][mask, :, :].to_numpy()
-    vy_mask = xsub["vy"][mask, :, :].to_numpy()
-
-    # Invert each component
-    result = {
-        "vx": np.zeros((len(solu_dates), vx_mask.shape[1], vx_mask.shape[2])),
-        "vy": np.zeros((len(solu_dates), vy_mask.shape[1], vy_mask.shape[2])),
-    }
-    # Progress bar
-    with tqdm.tqdm(
-        total=(vx_mask.shape[1] - 2) * (vx_mask.shape[2] - 2) * 2, disable=not pbar
-    ) as pbar:
-        # Loops over grid
-        for i in range(1, vx_mask.shape[1] - 1):
-            for j in range(1, vx_mask.shape[2] - 1):
-                for comp, vgrid in [("vx", vx_mask), ("vy", vy_mask)]:
-                    # Get unique dates in 5 point stencil
-                    sub_mask = np.logical_or.reduce(
-                        [
-                            np.logical_not(np.isnan(vgrid[:, i, j])),
-                            np.logical_not(np.isnan(vgrid[:, i, j - 1])),
-                            np.logical_not(np.isnan(vgrid[:, i, j + 1])),
-                            np.logical_not(np.isnan(vgrid[:, i - 1, j])),
-                            np.logical_not(np.isnan(vgrid[:, i + 1, j])),
-                        ]
-                    )
-                    sub_aq1 = aq1[sub_mask]
-                    sub_aq2 = aq2[sub_mask]
-                    sub_uniq_aq = np.unique(np.append(sub_aq1, sub_aq2))
-                    sub_solu_dates = (sub_uniq_aq[:-1] + sub_uniq_aq[1:]) / 2    
-
-                    # Set up linear systems
-                    As = []
-                    bs = [None] * 5
-                    for k, v in enumerate(
-                        [
-                            vgrid[:, i, j],
-                            vgrid[:, i, j - 1],
-                            vgrid[:, i, j + 1],
-                            vgrid[:, i - 1, j],
-                            vgrid[:, i + 1, j],
-                        ]
-                    ):
-                        px_mask = np.logical_not(np.isnan(v))
-                        chunk = [None] * 5
-                        chunk[k], bs[k] = gen_vel_sys(
-                            v[px_mask], aq1[px_mask], aq2[px_mask], sub_uniq_aq
-                        )
-                        As.append(chunk)
-
-                    # Time regularization
-                    tregs = []
-                    for k in range(5):
-                        chunk = [None] * 5
-                        chunk[k] = gen_time_regu_second_cent(sub_uniq_aq, lt)
-                        tregs.append(chunk)
-
-                    # Space regularization
-                    dx = np.diff(xsub.x)[0]
-                    xreg = gen_space_regu_laplacian(sub_uniq_aq, dx, lx)
-
-                    # Assemble system
-                    A_sparse = scipy.sparse.bmat(As)
-                    treg_sparse = scipy.sparse.bmat(tregs)
-                    Aaug_sparse = scipy.sparse.vstack((A_sparse, treg_sparse, xreg))
-
-                    bs = np.vstack(bs)
-                    baug = np.vstack(
-                        (
-                            bs,
-                            np.zeros((treg_sparse.shape[0], 1)),
-                            np.zeros((xreg.shape[0], 1)),
-                        )
-                    )[:, 0]
-
-                    # Solve system
-                    res = scipy.sparse.linalg.lsqr(Aaug_sparse, baug)[0][:len(sub_solu_dates)]
-
-                    # Interpolate to grid dates
-                    cs = scipy.interpolate.CubicSpline(sub_solu_dates, res)
-                    result[comp][:, i, j] = cs(solu_dates)
-
-                    pbar.update(1)
-
-    if return_data:
-        return solu_dates, result, xsub, mask
-    else:
-        return solu_dates, result
+        return xres
 
 
 def build_mask(dcube, sat_filt, start_date, stop_date):
@@ -626,10 +583,10 @@ def gen_space_regu_laplacian(uniq_aq, dx, l):
     diff_aq = np.diff(uniq_aq)
     xreg = np.zeros((len(diff_aq), len(diff_aq) * 5))
     for i in range(len(diff_aq)):
-        xreg[i, i] = -4 * l / (dx ** 2)
-        xreg[i, i + len(diff_aq)] = l / (dx ** 2)
-        xreg[i, i + 2 * len(diff_aq)] = l / (dx ** 2)
-        xreg[i, i + 3 * len(diff_aq)] = l / (dx ** 2)
-        xreg[i, i + 4 * len(diff_aq)] = l / (dx ** 2)
+        xreg[i, i] = -4 * l / (dx**2)
+        xreg[i, i + len(diff_aq)] = l / (dx**2)
+        xreg[i, i + 2 * len(diff_aq)] = l / (dx**2)
+        xreg[i, i + 3 * len(diff_aq)] = l / (dx**2)
+        xreg[i, i + 4 * len(diff_aq)] = l / (dx**2)
 
     return xreg

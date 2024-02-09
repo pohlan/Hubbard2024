@@ -164,3 +164,12 @@ cython_debug/
 
 # DS_Store
 .DS_Store
+
+# geotiffs
+*.tif
+
+# lidar files
+*.las
+
+# videos
+*.mp4
