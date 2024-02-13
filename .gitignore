@@ -159,7 +159,24 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-
+# figures
 *.png
 *.pdf
 *.jpg
+
+# data files
+*.shp
+*.shx
+*.dbf
+*.prj
+*.qpj
+*.cpg
+*.qmd
+*.gpkg
+
+*.csv
+*.mat
+*.nc
+*.tif
+
+*.zip
