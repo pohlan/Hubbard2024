@@ -173,3 +173,22 @@ cython_debug/
 
 # videos
 *.mp4
+
+# figures
+*.png
+*.pdf
+*.jpg
+
+# shape/geopackage files
+*.shp
+*.shx
+*.dbf
+*.prj
+*.qpj
+*.cpg
+*.qmd
+*.gpkg
+
+# other
+*.csv
+*.mat
