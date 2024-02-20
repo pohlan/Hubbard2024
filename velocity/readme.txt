@@ -20,3 +20,5 @@ itsinv.py - Velocity inversion routines. Includes functions to download itslive 
 
 datacube_tools.py is necessary for the inversion code (it downloads itslive data) and is from here:
 https://github.com/nasa-jpl/its_live/blob/main/notebooks/datacube_tools.py
+
+pod.ipynb - Something like the POD paper. Except not using SVD to interpolate to constant times and not smoothing V rows
