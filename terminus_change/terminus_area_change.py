@@ -50,7 +50,7 @@ def get_width(geom):
     width = min(edge_length)
     return width
 
-def append_positions_by_section(newrow, terminus_line):
+def append_positions_by_section(newrow, terminus_line, list_small_polygons):
     for (sect_name, sect_geom) in zip(df_sec.section, df_sec.geometry):
         split_pols = split(sect_geom, terminus_line)
         if len(list(split_pols.geoms)) != 2:
@@ -58,15 +58,25 @@ def append_positions_by_section(newrow, terminus_line):
         glacier_pol = area_rule(sect_name, split_pols.geoms[0], split_pols.geoms[1])
         width       = get_width(sect_geom)
         newrow[sect_name] = glacier_pol.area / width
+        # for one terminus position at time step 102, which is one of the furthest retreated ones:
+        # save the glacier part of the section as a shape file
+        sctions = [l.get("section") for l in list_small_polygons]
+        if day == df_terminus.Date[102] and not sect_name in sctions :
+            polrow = {"section":sect_name, "geometry": glacier_pol}
+            list_small_polygons.append(polrow)
 
 # split polygon with terminus line
 list_areas = []
+list_small_polygons = []
 # Cryohackathon terminus lines
 for (day, terminus_line) in zip(df_terminus.Date, df_terminus.geometry):
     newrow = {}
     newrow["Date"] = dt.datetime.strptime(day, "%Y-%m-%d").date()
-    append_positions_by_section(newrow, terminus_line)
+    append_positions_by_section(newrow, terminus_line, list_small_polygons)
     list_areas.append(newrow)
+# save polygons with glacier part of sections
+gdf_small_polygons = gpd.GeoDataFrame(list_small_polygons, crs=df_sec.crs)
+gdf_small_polygons.to_file(data_path+"section_polygons_glacier_only.gpkg", driver="GPKG")
 
 # add McNabb terminus lines (for long term trend, don't help much for seasonal variability)
 # for (yr, day, terminus_line) in zip(df_terminus_mcnabb.year, df_terminus_mcnabb.doy, df_terminus_mcnabb.geometry):
@@ -76,6 +86,7 @@ for (day, terminus_line) in zip(df_terminus.Date, df_terminus.geometry):
 #     append_positions_by_section(newrow, terminus_line)
 #     list_areas.append(newrow)
 
+# save all relative terminus positions
 df_areas = pd.DataFrame(list_areas)
 df_areas = df_areas.sort_values(by=["Date"])
 
