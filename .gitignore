@@ -170,6 +170,7 @@ cython_debug/
 
 # lidar files
 *.las
+*.laz
 
 # videos
 *.mp4
@@ -192,3 +193,9 @@ cython_debug/
 # other
 *.csv
 *.mat
+
+# QGIS files
+*.aux.xml
+
+# zip files
+*.zip
