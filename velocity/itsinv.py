@@ -12,7 +12,7 @@ import datacube_tools
 
 
 def single_point_inversion(
-    xy, lt, sat_filt=None, start_date=None, stop_date=None, return_data=False
+    xy, lt, sat_filt=None, start_date=None, stop_date=None, baseline_mask=(None, None), return_data=False,
 ):
     """
     Invert for a velocity timeseries at a single point. Regularize in space.
@@ -29,12 +29,13 @@ def single_point_inversion(
     sat_filt - list of satellites to use (optional)
     start_date - start date for inversion (optional)
     stop_date - stop date for inversion (optional)
-    return_data - option to return itslive data
+    baseline_mask - (int, int) low and high bound for baselines in integer days.
+        None means no bound. Example for no low bound and upper bound of 100 days : (None, 100) (optional)
+    return_data - option to return itslive data (optional)
 
     Returns
     ------
-    solu_dates - mid dates of average velocity solutions
-    result - dictionary of average velocity solutions
+    xres - datacube of inverted velocities
     (if return_data)
     xpnt - itslive datacube
     mask - mask baded on sat_filt, start, stop
@@ -56,7 +57,7 @@ def single_point_inversion(
     xpnt = xpnt.sortby("mid_date")
 
     # Build mask
-    mask = build_mask(xpnt, sat_filt, start_date, stop_date)
+    mask = build_mask(xpnt, sat_filt, start_date, stop_date, baseline_mask)
 
     # Apply mask to velocity grid
     vx_mask = xpnt["vx"][mask].to_numpy()[:, np.newaxis, np.newaxis]
@@ -153,7 +154,7 @@ def solve_point(args):
         if len(sub_solu_dates) < 3:
             cell = {}
             cell["vx"] = np.zeros(len(solu_dates))
-            cell["vx"] = np.zeros(len(solu_dates))
+            cell["vy"] = np.zeros(len(solu_dates))
             return (args[0], cell)
 
         # Set up linear system
@@ -278,6 +279,7 @@ def grid_inversion(
     sat_filt=None,
     start_date=None,
     stop_date=None,
+    baseline_mask=(None, None),
     return_data=False,
     pbar=False,
     ncpu=1,
@@ -300,6 +302,8 @@ def grid_inversion(
     sat_filt - list of satellites to use (optional)
     start_date - start date for inversion (optional)
     stop_date - stop date for inversion (optional)
+    baseline_mask - (int, int) low and high bound for baselines in integer days.
+        None means no bound. Example for no low bound and upper bound of 100 days : (None, 100) (optional)
     return_data - option to return itslive data
     pbar - option to show progress bar
     ncpu - number of processes to use (optional, default 1)
@@ -334,7 +338,7 @@ def grid_inversion(
             exit()
 
     # Build mask
-    mask = build_mask(xsub, sat_filt, start_date, stop_date)
+    mask = build_mask(xsub, sat_filt, start_date, stop_date, baseline_mask)
 
     # Get masked dates, converting to decimal year
     ns_in_year = 1e9 * 60 * 60 * 24 * 365
@@ -435,7 +439,7 @@ def grid_inversion(
         return xres
 
 
-def build_mask(dcube, sat_filt, start_date, stop_date):
+def build_mask(dcube, sat_filt, start_date, stop_date, baseline_mask):
     """
     Build velocity mask for inversion based on NaNs, satellite choices, and a date range
 
@@ -445,6 +449,7 @@ def build_mask(dcube, sat_filt, start_date, stop_date):
     sat_filt - list of satellites to use
     start_date - start date for inversion
     stop_date - stop date for inversion
+    baseline_mask - tuple specifying high and low baseline bounds in integer days
 
     Returns
     ------
@@ -481,6 +486,15 @@ def build_mask(dcube, sat_filt, start_date, stop_date):
         tstop = np.datetime64(stop_date)
         mask = np.logical_and(mask, dcube.acquisition_date_img2 <= tstop)
 
+    # Baseline filter
+    baseline = (dcube.acquisition_date_img2 - dcube.acquisition_date_img1).dt.days
+    
+    if(baseline_mask[0] is not None):
+        mask = np.logical_and(mask, baseline > baseline_mask[0])
+
+    if(baseline_mask[1] is not None):
+        mask = np.logical_and(mask, baseline < baseline_mask[1])
+    
     return mask
 
 
