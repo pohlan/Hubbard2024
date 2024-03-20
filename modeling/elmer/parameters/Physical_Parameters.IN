@@ -1,0 +1,79 @@
+#EM = 10 ! Extruded Mesh Levels
+
+
+! Define the parameter in MPa - a - m
+#yearinsec = 365.25*24*60*60
+#rhoi = 910.0/(1.0e6*yearinsec^2)   
+#rhow = 1000.0/(1.0e6*yearinsec^2) 
+#gravity = 9.81*yearinsec^2
+#MPainPa = 1.0e6 
+
+! Prefactor from Cuffey and Paterson (2010) in MPa^{-3} a^{-1}
+#A1 = 2.89165e-13*yearinsec*1.0e18 
+#A2 = 2.42736e-02*yearinsec*1.0e18 
+#Q1 = 60.0e3
+#Q2 = 115.0e3
+
+#ng = 3.0
+#Aglen = 6.8e-24*yearinsec*MPainPa^3   
+#eta = (2.0*Aglen/10.0)^(-1.0/ng)
+
+! For the sheet
+#Ar = Aglen*2.0/ng^ng ! Ian 
+#alphas = 3.0 
+#betas = 2.0 
+#ev = 1.0e-4
+#lr = 5.0 
+#hr = 0.5 
+#Ks = (2.0/(1000.0*9.80))*yearinsec*(1.0/MPainPa)^(1.0-betas)
+#Hs = 0.05 ! IC for h
+
+! For the Channels
+#alphac = 1.25 
+#betac = 1.5 
+#Kc = 0.5*yearinsec*(1.0/MPainPa)^(1.0-betac) 
+#Ac = Aglen*2.0/ng^ng ! Ian 
+#lc = 20.0 
+#Ct = 7.5e-8*MPainPa              
+#Cw = 4220.0*yearinsec^2 
+#Lw = 335000.0*yearinsec^2
+
+!For melt function 
+#ddt = 21.0 
+#sm = 700.0
+#rs = 40
+#rm = 32e-3
+#tspr = 135.0
+#taut = 244.0
+
+!For the Moulins
+#Am = 4.0
+
+! Minimum ice thickness
+#Hmin = 10.0
+
+! For the friction law
+#ng = 3.0
+#C = 0.5
+#Aglen = 6.8e-24*yearinsec*MPainPa^3   
+!#As = C * (Aglen)^(-1.0/ng) 
+#beta = 0.025 ! 0.0275 = peak 1000 m/a ! smaller = more slip 
+#As = beta^(-ng) !      ! larger = more slip 
+#q = 1.0   	    !Friction Law Post-Peak Exponent
+#m = 3 !3.25          ! power law exponent 
+
+!Source Term
+#Source = 0.06 ! m/a 
+
+#flux into upper boundary
+#influx = 300000.0 ! m^2/yr (flux per unit width entering the upstream boundary)
+
+! parameters for mass balance profile; using # to define LUA variables.
+! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
+#dBdz = 0.005 ! mass balance gradient {a^-1}
+#Bmax = 2 ! maximum mass balance rate {m a^-1}
+#ELA = 1200 ! equilibrium line altitude {m}
+#k = 0.005 ! smoothing parameter
+#zthreshold = Bmax/dBdz+ELA
+#Bsl = -dBdz * ELA! mass balance rate at sea level {m a^-1}
+
