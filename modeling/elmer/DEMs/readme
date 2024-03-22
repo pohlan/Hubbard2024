@@ -1,0 +1,2 @@
+s0 -  Subset surface DEM (ifsar) to hubbard outline using hubbard_outline geopackage
+s1 -  Reformat surface DEM to a text file elmer can read   

@@ -1,4 +1,4 @@
-#EM = 10 ! Extruded Mesh Levels
+#EM = 6 ! Extruded Mesh Levels
 
 
 ! Define the parameter in MPa - a - m
@@ -65,15 +65,16 @@
 !Source Term
 #Source = 0.06 ! m/a 
 
-#flux into upper boundary
-#influx = 300000.0 ! m^2/yr (flux per unit width entering the upstream boundary)
+!flux into upper boundary
+#influx = 100000.0 ! m^2/yr (flux per unit width entering the upstream boundary)
+
 
 ! parameters for mass balance profile; using # to define LUA variables.
 ! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
-#dBdz = 0.005 ! mass balance gradient {a^-1}
-#Bmax = 2 ! maximum mass balance rate {m a^-1}
+! loosely based on Lemon Creek Glacier
+#dBdz = 0.010 ! mass balance gradient {a^-1}
+#Bmax = 4 ! maximum mass balance rate {m a^-1}
 #ELA = 1200 ! equilibrium line altitude {m}
 #k = 0.005 ! smoothing parameter
 #zthreshold = Bmax/dBdz+ELA
-#Bsl = -dBdz * ELA! mass balance rate at sea level {m a^-1}
-
+#Bsl = -dBdz*ELA ! mass balance rate at sea level {m a^-1}
