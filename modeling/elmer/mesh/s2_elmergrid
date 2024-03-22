@@ -1,0 +1,9 @@
+# To go serial, use this:
+ElmerGrid 14 2 mendenhall.msh -autoclean
+ElmerGrid 14 5 mendenhall.msh -autoclean
+
+# To go parallel, use this:
+#ElmerGrid 14 2 taku.msh -autoclean -metis 4 0 # change first number to determine number of CPUs
+#ElmerGrid 14 5 taku.msh -autoclean -metis 4 0
+
+
