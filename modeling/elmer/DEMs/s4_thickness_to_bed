@@ -1,0 +1,11 @@
+#!/bin/bash
+# Subtracts the ice thickness map from the surface DEM to produce a bedrock DEM
+
+if test -f "taku_bed.tif"; then
+    rm hubbard_bed.tif
+fi
+
+A=./hubbard_surface.tif
+B=./hubbard_thickness_smoothed.tif
+
+gdal_calc.py -A $A -B $B --outfile=./hubbard_bed.tif --calc="A-B"

@@ -1,0 +1,11 @@
+#!/bin/bash
+# 1. Reproject to AK Albers
+# 2. crop DEM to the geopackage
+
+if test -f "hubbard_thickness.tif"; then
+    rm hubbard_thickness.tif
+fi
+
+gdalwarp -t_srs ESRI:102247 -tr 50 50 THICKNESS_RGI-1.1_2021July01.tif alaska_albers_thickness.tif
+
+gdalwarp -t_srs ESRI:102247 -tr 50 50 -cutline hubbard_outline.gpkg -crop_to_cutline alaska_albers_thickness.tif hubbard_thickness.tif # crop 
