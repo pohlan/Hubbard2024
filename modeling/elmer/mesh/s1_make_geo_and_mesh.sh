@@ -8,4 +8,4 @@ fi
 
 python Contour2geo.py -r 150.0 -i ./outline/hubbard_contour.dat -o hubbard_mesh.geo
 
-gmsh hubbard.geo -2 
+gmsh hubbard_mesh.geo -2 

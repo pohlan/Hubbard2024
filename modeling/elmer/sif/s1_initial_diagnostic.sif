@@ -14,9 +14,10 @@ echo on
 $Step = "step1"
 
 include "../parameters/Physical_Parameters.IN"
+include "../DEMs/mesh_parameters.IN"
 
 Header
-  Mesh DB "../mesh" "taku"
+  Mesh DB "../mesh" "hubbard_mesh"
   Results Directory "../results"
 End
 
@@ -117,14 +118,14 @@ Solver 1
 
   ! Bedrock DEM
   Variable 1 = String "bedDEM"
-  Variable 1 data file = File "../DEMs/taku_bed.dat"
-  Variable 1 x0 = Real 522525.0 ! add 25 to coordinates in geotiff
-  Variable 1 y0 = Real 6473525.0 ! add 25 m to coordinates in geotiff
-  Variable 1 lx = Real 38450.0 ! subtract 50 m from edges in geotiff
-  Variable 1 ly = Real 50950.0 ! subtract 50 m from edges in geotiff
-  Variable 1 Nx = Integer 770
-  Variable 1 Ny = Integer 1020
-  Variable 1 Invert = Logical False 
+  Variable 1 data file = File "../DEMs/hubbard_bed.dat"
+  Variable 1 x0 = Real #bed_x0 
+  Variable 1 y0 = Real #bed_y0 
+  Variable 1 lx = Real #bed_lx 
+  Variable 1 ly = Real #bed_ly 
+  Variable 1 Nx = Integer #bed_nx
+  Variable 1 Ny = Integer #bed_ny
+  Variable 1 Invert = Logical True
   Variable 1 Fill = Logical False 
   Variable 1 Position Tol = Real 1.0e-1
   Variable 1 No Data = Real -9999.0
@@ -132,14 +133,14 @@ Solver 1
 
   ! Surface DEM
   Variable 2 = String "ZsDEM"
-  Variable 2 data file = File "../DEMs/taku_surface.dat"
-  Variable 2 x0 = Real 522525.0 ! add 25 to coordinates in geotiff
-  Variable 2 y0 = Real 6473525.0 ! add 25 m to coordinates in geotiff
-  Variable 2 lx = Real 38450.0 ! subtract 50 m from edges in geotiff
-  Variable 2 ly = Real 50950.0 ! subtract 50 m from edges in geotiff
-  Variable 2 Nx = Integer 770
-  Variable 2 Ny = Integer 1020
-  Variable 2 Invert = Logical False 
+  Variable 2 data file = File "../DEMs/hubbard_surf.dat"
+  Variable 2 x0 = Real #surf_x0 
+  Variable 2 y0 = Real #surf_y0 
+  Variable 2 lx = Real #surf_lx 
+  Variable 2 ly = Real #surf_ly 
+  Variable 2 Nx = Integer #surf_nx
+  Variable 2 Ny = Integer #surf_ny
+  Variable 2 Invert = Logical True
   Variable 2 Fill = Logical False 
   Variable 2 Position Tol = Real 1.0e-1
   Variable 2 No Data = Real -9999.0
