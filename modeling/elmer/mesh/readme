@@ -1,0 +1,8 @@
+Prepare DEMs to be loaded into Elmer
+
+exported csv containing XY coordinates of outline of domain. Get this from QGIS using "Polygon to Line" and QChainage around the geopackage of domain in ../DEMs/hubbard_outline.gpkg. 
+
+
+s0 -  Convert csv file from QGIS to dat file containing just XY coordinates
+s1 - make geo file from dat file and use geo file to create msh file using gmsh 
+s2 - Run ElmerGrid to make elmer mesh 

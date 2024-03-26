@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Input CSV file
+input_file="./outline/hubbard_points.csv"
+
+# Output .dat file
+output_file="./outline/hubbard_contour.dat"
+
+# Use awk to extract X and Y coordinates from CSV and save to .dat file
+awk -F ',' 'NR>1 {print $1, $2}' "$input_file" > "$output_file"
+
+echo "Coordinates extracted from CSV file and saved to $output_file"

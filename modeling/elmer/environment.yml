@@ -1,0 +1,14 @@
+name: hubbard
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - gmsh
+  - geopandas
+  - gdal
+#  - numpy
+#  - matplotlib
+#  - rasterio
+#  - datetime
+#  - scipy
+	
