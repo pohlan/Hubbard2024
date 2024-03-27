@@ -2,12 +2,12 @@ import fiona
 import numpy as np
 import matplotlib.pyplot as plt
 
-shp = fiona.open("frenchjoe.gpkg", mode="r")
-coords = np.array(list(shp.values())[1]['geometry']['coordinates']).squeeze()
+shp = fiona.open("hubbard_mesh_firedrake.gpkg", mode="r")
+coords = np.array(list(shp.values())[0]['geometry']['coordinates']).squeeze()
 shp.close()
 
 # Resolution
-lc = 200
+lc = 400
 
 # Trim last point (is identical to first)
 coords = coords[:-1, :]
@@ -16,7 +16,7 @@ coords = coords[:-1, :]
 coords /= 1000
 lc /= 1000
 
-with open("frenchjoe.geo", mode="w") as fd:
+with open("hubbard_mesh_firedrake.geo", mode="w") as fd:
     fd.write("// This is a geo file created using the python script makegeo.py\n")
     fd.write("Mesh.Algorithm=5;\n")
     fd.write("// Element size\n")
