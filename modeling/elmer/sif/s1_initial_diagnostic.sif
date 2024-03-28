@@ -129,7 +129,7 @@ Solver 1
   Variable 1 Fill = Logical False 
   Variable 1 Position Tol = Real 1.0e-1
   Variable 1 No Data = Real -9999.0
-  Variable 1 No Data Tol = Real 1.0 
+  Variable 1 No Data Tol = Real 100.0 
 
   ! Surface DEM
   Variable 2 = String "ZsDEM"
@@ -144,7 +144,7 @@ Solver 1
   Variable 2 Fill = Logical False 
   Variable 2 Position Tol = Real 1.0e-1
   Variable 2 No Data = Real -9999.0
-  Variable 2 No Data Tol = Real 1.0
+  Variable 2 No Data Tol = Real 100.0
 
   ! Velocity map
   ! Variable 3 = String "millanSpeed"
@@ -216,6 +216,7 @@ End
 
 Solver 3
   Equation = "NormalVector"
+  Exec Solver = "Never"
   Procedure = "ElmerIceSolvers" "ComputeNormalSolver"
 
   Variable = String "Normal Vector"
@@ -238,7 +239,8 @@ End
 
 Solver 5
   Equation = "Surface Slope"
-  Exec Solver = "After Simulation"
+  Exec Solver = "Never"
+  !Exec Solver = "After Simulation"
   Procedure = "../solvers/Compute2DNodalGradient" "Compute2DNodalGradient"
   Variable = -dofs 2 "surfGrad"
   Variable Name = String "ZsDEM"

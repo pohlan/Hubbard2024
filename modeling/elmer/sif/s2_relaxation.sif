@@ -10,7 +10,7 @@ $Step = "step2"
 include "../parameters/Physical_Parameters.IN"
 
 Header
-  Mesh DB "../mesh" "taku"
+  Mesh DB "../mesh" "hubbard_mesh"
   Results Directory "../results"
 End
 
