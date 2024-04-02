@@ -8,6 +8,7 @@ echo on
 $Step = "step2"
 
 include "../parameters/Physical_Parameters.IN"
+include "../DEMs/mesh_parameters.IN"
 
 Header
   Mesh DB "../mesh" "hubbard_mesh"

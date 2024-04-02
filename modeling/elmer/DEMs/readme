@@ -1,8 +1,7 @@
 Prepare DEMs to be loaded into Elmer
 
-s0 -  Subset surface DEM (ifsar) to hubbard outline using hubbard_outline geopackage
-s1 -  Reformat surface DEM to a text file elmer can read   
+s1 -  Subset surface DEM (ifsar) to hubbard outline using hubbard_outline geopackage
 s2 - Crop thickness from full RGI of SC AK to just hubbard polygon
 s3 - Smooth thickness (why? Ask Jason) 
 s4 - subtract thickness from surface to get bed 
-s5 - Reformat bed DEM to text file elmer can read 
+s5 - Reformat bed and surface DEM to text file elmer can read 
