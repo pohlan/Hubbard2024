@@ -68,9 +68,9 @@ Initial Condition 1
   Pressure = Real 0.0 
   !Velocity 1 = Real 0.0
   !Velocity 2 = Real 0.0
-  Velocity 1 = Variable millanVx
+  Velocity 1 = Variable Velocity 1
    Real LUA "tx"
-  Velocity 2 = Variable millanVy
+  Velocity 2 = Variable Velocity 2
     Real LUA "tx"
   Velocity 3 = Real 0.0 
 End
@@ -165,7 +165,7 @@ Solver 1
   Variable 3 No Data = Real -9999.0
   Variable 3 No Data Tol = Real 100.0
 
-  Variable 4 = String "millanVx"
+  Variable 4 = String "Velocity 1"
   Variable 4 data file = File "../velocity/millan_vx.dat"
   Variable 4 x0 = Real #x0 
   Variable 4 y0 = Real #y0 
@@ -179,7 +179,7 @@ Solver 1
   Variable 4 No Data = Real -9999.0
   Variable 4 No Data Tol = Real 100.0
 
-  Variable 5 = String "millanVy"
+  Variable 5 = String "Velocity 2"
   Variable 5 data file = File "../velocity/millan_vy.dat"
   Variable 5 x0 = Real #x0 
   Variable 5 y0 = Real #y0 
@@ -196,8 +196,8 @@ Solver 1
   Exported Variable 1 = -dofs 1 "BedDEM"
   Exported Variable 2 = -dofs 1 "ZsDEM"
   Exported Variable 3 = -dofs 1 "Velocity"
-  Exported Variable 4 = -dofs 1 "millanVx"
-  Exported Variable 5 = -dofs 1 "millanVy"
+  Exported Variable 4 = -dofs 1 "Velocity 1"
+  Exported Variable 5 = -dofs 1 "Velocity 2"
   Exported Variable 6 = -dofs 1 "Thickness"
   
 End 
@@ -402,9 +402,9 @@ Boundary Condition 2
   ComputeNormal = Logical True
   Mass Consistent Normals = Logical True
   
- ! Velocity 1 = Variable millanVx
+ ! Velocity 1 = Variable Velocity 1
  !  Real LUA "tx"
- ! Velocity 2 = Variable millanVy
+ ! Velocity 2 = Variable Velocity 2
  !   Real LUA "tx"
  !  Velocity 3 = Real 0.0
 
@@ -450,8 +450,8 @@ End
 Boundary Condition 3
   Name = "surface"
   Top Surface = Equals ZsDEM
-  !Velocity 1 = Variable millanVx
+  !Velocity 1 = Variable Velocity 1
   ! Real LUA "tx"
-  !Velocity 2 = Variable millanVy
+  !Velocity 2 = Variable Velocity 2
   !  Real LUA "tx"
 End

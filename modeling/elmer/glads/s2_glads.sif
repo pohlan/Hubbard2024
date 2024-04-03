@@ -387,9 +387,10 @@ Boundary Condition 3
   Bottom Surface = Equals BedDEM   
   ComputeNormal = Logical True
 
-  ! Velocity 1 = Real 0.0
-  ! Velocity 2 = Real 0.0
-  ! Velocity 3 = Real 0.0
+  Velocity 1 = Variable Velocity 1
+   Real LUA "tx"
+  Velocity 2 = Variable Velocity 2
+    Real LUA "tx"
 
 ! --------- Coulomb Sliding
 
