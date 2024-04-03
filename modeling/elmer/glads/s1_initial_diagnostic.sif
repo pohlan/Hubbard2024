@@ -18,7 +18,7 @@ include "../DEMs/mesh_parameters.IN"
 
 Header
   Mesh DB "../mesh" "hubbard_mesh"
-  Results Directory "../results"
+  Results Directory "../results_glads"
 End
 
 Constants
@@ -32,14 +32,14 @@ Simulation
 
   Extruded Mesh Levels = Integer #EM ! make vertical resolution finer than horizontal resolution?
   ! Preserve Edges = Logical True ! saves outline of the domain, useful for GlaDS
-  ! Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
+   Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
 
   Steady State Min Iterations = 1
   Steady State Max Iterations = 1
 
   Output File = $Step".result"
   Post File = $Step".vtu"
-  max output level = 4
+  max output level = 3
 
   Initialize Dirichlet Conditions = Logical False
 
@@ -151,7 +151,7 @@ Solver 1
   Variable 2 No Data Tol = Real 100.0
 
   ! Velocity map
-  Variable 3 = String "millanSpeed"
+  Variable 3 = String "Velocity"
   Variable 3 data file = File "../velocity/millan_v.dat"
   Variable 3 x0 = Real #x0 
   Variable 3 y0 = Real #y0 
@@ -195,7 +195,7 @@ Solver 1
 
   Exported Variable 1 = -dofs 1 "BedDEM"
   Exported Variable 2 = -dofs 1 "ZsDEM"
-  Exported Variable 3 = -dofs 1 "millanSpeed"
+  Exported Variable 3 = -dofs 1 "Velocity"
   Exported Variable 4 = -dofs 1 "millanVx"
   Exported Variable 5 = -dofs 1 "millanVy"
   Exported Variable 6 = -dofs 1 "Thickness"
@@ -258,7 +258,7 @@ End
 Solver 6
   Equation = "Stokes-Vec"
   Procedure = "IncompressibleNSVec" "IncompressibleNSSolver"
-  !Exec Solver = "Never"
+  Exec Solver = "Never"
   
   Stokes Flow = Logical True
 
