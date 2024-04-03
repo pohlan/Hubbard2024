@@ -1,0 +1,22 @@
+#!/bin/bash
+# 1. Reproject to AK Albers
+# 2. crop DEM to the geopackage
+
+if test -f "millan_vx.tif"; then
+    rm millan_vx.tif
+fi
+
+if test -f "millan_vy.tif"; then
+    rm millan_vy.tif
+fi
+
+if test -f "millan_v.tif"; then
+    rm millan_v.tif
+fi
+
+gdalwarp -t_srs ESRI:102247 -tr 50 50 -cutline ../DEMs/hubbard_outline.gpkg -crop_to_cutline  V_RGI-1.1_2023November22.tif millan_v.tif
+
+gdalwarp -t_srs ESRI:102247 -tr 50 50 -cutline ../DEMs/hubbard_outline.gpkg -crop_to_cutline VX_RGI-1.1_2023November22.tif millan_vx.tif
+
+gdalwarp -t_srs ESRI:102247 -tr 50 50 -cutline ../DEMs/hubbard_outline.gpkg -crop_to_cutline VY_RGI-1.1_2023November22.tif millan_vy.tif
+
