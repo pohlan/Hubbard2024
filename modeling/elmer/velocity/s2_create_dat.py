@@ -27,6 +27,8 @@ def createDat(file):
     x_flat = X.flatten()
     y_flat = Y.flatten()
     vel_flat = velocity.flatten()
+    vel_flat[np.isnan(vel_flat)] = -9999
+
 
     np.savetxt(file[:-4] + '.dat',np.column_stack((x_flat, y_flat, vel_flat)), fmt="%10.2f %10.2f %10.2f")
     
