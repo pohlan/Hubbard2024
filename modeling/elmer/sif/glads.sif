@@ -1,19 +1,23 @@
-! Current issues
-! balance rate not masked correctly if try to calculate slope during step 1?
-
 check keywords warn
 echo on
 
+
 ! Name of output files
-$Step = "step2"
+$Step = "glads"
+
+$namerun = "synthTR"
 
 include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
+!timestep in years
+#dt = 0.5/365.25
+
 Header
-  Mesh DB "." "hubbard_ice_mesh"
-  Results Directory "../results_glads"
+  Mesh DB "." "hubbard"
+  Results Directory "../results"
 End
+
 
 Constants
   Water Density = Real #rhow
@@ -32,14 +36,13 @@ Simulation
   Coordinate System  =  Cartesian 3D 
   Simulation Type = Transient     
 
-  Extruded Mesh Levels = Integer #EM ! make vertical resolution finer than horizontal resolution?
-   Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
-
+  Extruded Mesh Levels = Integer #EM
+  Preserve Baseline = Logical True
 
   Timestepping Method = "bdf"
   BDF Order = 1
-  TimeStep intervals = 100
-  Timestep Sizes = Real #0.5/365.25 ! in years
+  TimeStep intervals = 730
+  Timestep Sizes = Real #dt
   Output Intervals = 1 
 
   Steady State Min Iterations = 1
@@ -50,13 +53,11 @@ Simulation
 
   ! We need a restart to have the ZsDEM and ZbDEM variables for
   ! the initial condition of Zs and Zb 
-  Restart File = "step1.result"
-  Restart Position = 0
-  Restart Time = Real 0.0
-  Restart Before Initial Conditions = Logical True
+  !Restart File = "step1.result"
+  !Restart Position = 0
+  !Restart Time = Real 0.0
+  !Restart Before Initial Conditions = Logical True
   max output level = 3
-
-  Initialize Dirichlet Conditions = Logical False
 
   Dirty Finish = Logical True
 End
@@ -64,23 +65,22 @@ End
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! The ice 
 Body 1
-  Name = "ice"
   Equation = 1
   Body Force = 1
   Material = 1
   Initial Condition = 1
 End
 
+! The Upper Free surface
 Body 2
-  Name = "surface"
   Equation = 2
   Body Force = 2
   Material = 1
-  Initial Condition = 1
+  Initial Condition = 2
 End
 
+! Sheet and Bottom surface
 Body 3
-  Name = "sheet"
   Equation = 3
   Material = 1
   Body Force = 3
@@ -89,49 +89,45 @@ End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Initial Condition 1
-  Zs = equals ZsDEM 
-  Zb = equals ZbDEM 
+! Comment this so that we use the restart solution 
+! as Initial Condition for the NS solver
+! Pressure = Real 0.0 
+!Velocity 1 = Real 0.0 
+! Velocity 2 = Real 0.0 
+! Velocity 3 = Real 0.0
+! Zb = Equals bedDEM
+  Zs = Equals ZsDEM
+  Zb = Equals bedDEM
 End
 
 Initial Condition 2
-  Zs = equals ZsDEM 
+ Zs = Equals ZsDEM
 End
 
 Initial Condition 3
-  Sheet Thickness = Real #Hs
-  Zb = equals ZbDEM 
-End
+  Zb = Equals bedDEM
 
+  Sheet Thickness = Real #Hs
+
+! Moulin are active if > 1.0
+! Moulin can only be activated
+   Active Moulin = Real 1.0
+
+End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Body Force 1
   Flow BodyForce 1 = Real 0.0                          
   Flow BodyForce 2 = Real 0.0
   Flow BodyForce 3 = Real #-gravity 
+  Long Mesh Update 2 = Real 0.0
 End
 
+!! accumulation flux in m/year
 Body Force 2
-  Zs Accumulation Flux 1 = Real 0.0e0
-  Zs Accumulation Flux 2 = Real 0.0e0
-  
-! surface slope norm
-  slope = Variable "surfGrad 1", "surfGrad 2"
-    REAL LUA "math.sqrt(tx[0]*tx[0]+tx[1]*tx[1])*180/3.14" ! slope is in degrees
-
-  unmaskedBalanceRate = Variable Zs
-    Real LUA "(dBdz*(tx[0] - 1/(2*k)*math.log(1 + math.exp(2*k*(tx[0]-zthreshold)))) + Bsl)"
-
-  ! do not allow accumulation if the slope exceeds some angle (10 deg)
-  ! would like to add "and" balanceRate > 0, but not working
-  Zs Accumulation Flux 3 = equals unmaskedBalanceRate  
-  Zs Accumulation Flux 3 Condition = Variable slope !, unmaskedBalanceRate
-    Real LUA "(function() if tx[0]>10 then return -1.0 else return 1.0 end end)()"
-    !Real LUA "(function() if (tx[0]>5 and tx[1]>0)  then return -1.0 else return 1.0 end end)()"
-
-  ! repeating the accumulation flux for visualization purposes
-  balanceRate = equals unmaskedBalanceRate  
-  balanceRate Condition = Variable slope
-    Real LUA "(function() if tx[0]>10  then return -1.0 else return 1.0 end end)()"
+   Zs Accumulation Flux 1 = Real 0.0e0
+   Zs Accumulation Flux 2 = Real 0.0e0
+   Zs Accumulation Flux 3 = Real 0.0
 
 End
 
@@ -152,16 +148,15 @@ Body Force 3
      Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Material 1
   Density = Real #rhoi   
 
   Viscosity Model = String "glen"
-  Viscosity = Real 1.0 ! use constant initial viscosity
+  Viscosity = 1.0 ! Dummy but avoid warning output
   Glen Exponent = Real 3.0
 
-  Limit Temperature = Real 0.0
+  Limit Temperature = Real -10.0
   Rate Factor 1 = Real #A1
   Rate Factor 2 = Real #A2
   Activation Energy 1 = Real #Q1 
@@ -169,23 +164,24 @@ Material 1
   Glen Enhancement Factor = Real 1.0
   Critical Shear Rate = Real 1.0e-10
 
-  ! Relative Temperature = Real 0.0
-  
-  Glen Allow Old Keywords = Logical True
   Constant Temperature = Real 0.0
-  
+
   Cauchy = Logical True 
 
+  ! Bed condition
+  Min Zb = Equals BedDEM
+  Max Zb = Real +1.0e10
+
+  Glen Exponent = Real #ng
 
   !For the Sheet
   Sheet Conductivity = Real #Ks
   Sheet flow exponent alpha = Real #alphas
   Sheet flow exponent beta = Real #betas
   Englacial Void Ratio = Real #ev
-  !Sliding Velocity = Variable Velocity 1, Velocity 2
-  ! Real LUA "math.sqrt((tx[0]^2)+(tx[1]^2))"!Equals vmag!Equals Flow Solution
-  Sliding Velocity = Variable Velocity   
-    Real LUA "tx[0]"
+! Sliding Velocity = Equals millanspeed
+  Sliding Velocity = Variable millanvx, millanvy
+   Real LUA "math.sqrt((tx[0]^2)+(tx[1]^2))"!Equals vmag!Equals Flow Solution
   Bedrock Bump Length = Real #lr 
   Bedrock Bump High = Real #hr
   Sheet Closure Coefficient = Real #Ar
@@ -200,8 +196,10 @@ Material 1
   Water Heat Capacity = Real #Cw
 
   ! Coupling with ice flow and glacier geometry
-  Ice Normal Stress = Variable Thickness
-    Real LUA "math.abs(tx[0]*gravity*rhoi)"
+  Ice Normal Stress = Variable ZsDEM, bedDEM
+    Real LUA "math.abs((tx[0]-tx[1])*gravity*rhoi)/MPainPa"
+  !Ice Normal Stress = Variable ZsDEM, bedDEM
+  !  Real LUA "math.abs((tx[0]-tx[1])*gravity*rhoi)"
 
 ! For the Melt parametrisation (ComputeQm and AblationMelt)
   !SM Melt Parameter = !Variable Time
@@ -219,6 +217,7 @@ Material 1
   Crevasse Criteria = Real 0.005
 
 End
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -238,8 +237,8 @@ Solver 1
   Neglect sheet Thickness in Potential = Logical True
 
  Min Sheet Height = Real 0.01
- Limit Negative Effective Pressure = Logical True 
- !Max Channel Area = Real 10.0
+ Limit Negative Effective Pressure = Logical False !True 
+ Max Channel Area = Real 10.0
 
 ! choices are EXPLICT, CRANK-NICOLSON, IMPLICIT
   Channels Integration method = String "Crank-Nicolson"
@@ -259,9 +258,9 @@ Solver 1
   Linear System Abort Not Converged = True 
 
   Nonlinear System Max Iterations = 50
-  Nonlinear System Convergence Tolerance  = 1.0e-6
-  Nonlinear System Relaxation Factor = 1.00
-  Nonlinear System Abort Not Converged = True 
+  Nonlinear System Convergence Tolerance  = 1.0e-2
+  Nonlinear System Relaxation Factor = 0.5
+  Nonlinear System Abort Not Converged = False 
 
   Coupled Max Iterations = Integer 10
   Coupled Convergence Tolerance = Real 1.0e-3
@@ -291,37 +290,166 @@ Solver 3
   VTU OutPutFile = Logical True   ! set to TRUE to have VTU output
   VTU BinaryFile = Logical True   
 
-  Channels OutPut Directory Name = String "results"
+  Channels OutPut Directory Name = String "../results"
   Channels OutPut File Name = String $Step"_channels"
 End
 
 
-
 Solver 4
-  Equation = "NormalVector"
+  ! We don't need it anymore
+  Exec Solver = "Before Simulation" !Never
+  Equation = "Read DEMs"
+  Variable = -nooutput DummyR
+  Procedure = "ElmerIceSolvers" "Grid2DInterpolator"
+
+ ! Bedrock DEM
+  Variable 1 = String "bedDEM"
+  Variable 1 data file = File "../DEMs/hubbard_bed.dat"
+  Variable 1 x0 = Real #x0 
+  Variable 1 y0 = Real #y0 
+  Variable 1 lx = Real #lx 
+  Variable 1 ly = Real #ly 
+  Variable 1 Nx = Integer #nx
+  Variable 1 Ny = Integer #ny
+  Variable 1 Invert = Logical False
+  Variable 1 Fill = Logical False 
+  Variable 1 Position Tol = Real 1.0e-1
+  Variable 1 No Data = Real -9999.00
+  Variable 1 No Data Tol = Real 100.0 
+
+  ! Surface DEM
+  Variable 2 = String "ZsDEM"
+  Variable 2 data file = File "../DEMs/hubbard_surface.dat"
+  Variable 2 x0 = Real #x0 
+  Variable 2 y0 = Real #y0 
+  Variable 2 lx = Real #lx 
+  Variable 2 ly = Real #ly 
+  Variable 2 Nx = Integer #nx
+  Variable 2 Ny = Integer #ny
+  Variable 2 Invert = Logical False
+  Variable 2 Fill = Logical False 
+  Variable 2 Position Tol = Real 1.0e-1
+  Variable 2 No Data = Real -9999.0
+  Variable 2 No Data Tol = Real 100.0
+
+  ! Velocity map
+  Variable 3 = String "millanSpeed"
+  Variable 3 data file = File "../velocity/millan_v.dat"
+  Variable 3 x0 = Real #x0 
+  Variable 3 y0 = Real #y0 
+  Variable 3 lx = Real #lx 
+  Variable 3 ly = Real #ly 
+  Variable 3 Nx = Integer #nx
+  Variable 3 Ny = Integer #ny
+  Variable 3 Invert = Logical False
+  Variable 3 Fill = Logical False 
+  Variable 3 Position Tol = Real 1.0e-1
+  Variable 3 No Data = Real -9999.0
+  Variable 3 No Data Tol = Real 100.0
+
+  Variable 4 = String "millanVx"
+  Variable 4 data file = File "../velocity/millan_vx.dat"
+  Variable 4 x0 = Real #x0 
+  Variable 4 y0 = Real #y0 
+  Variable 4 lx = Real #lx 
+  Variable 4 ly = Real #ly 
+  Variable 4 Nx = Integer #nx
+  Variable 4 Ny = Integer #ny
+  Variable 4 Invert = Logical False
+  Variable 4 Fill = Logical False 
+  Variable 4 Position Tol = Real 1.0e-1
+  Variable 4 No Data = Real -9999.0
+  Variable 4 No Data Tol = Real 100.0
+
+  Variable 5 = String "millanVy"
+  Variable 5 data file = File "../velocity/millan_vy.dat"
+  Variable 5 x0 = Real #x0 
+  Variable 5 y0 = Real #y0 
+  Variable 5 lx = Real #lx 
+  Variable 5 ly = Real #ly 
+  Variable 5 Nx = Integer #nx
+  Variable 5 Ny = Integer #ny
+  Variable 5 Invert = Logical False
+  Variable 5 Fill = Logical False 
+  Variable 5 Position Tol = Real 1.0e-1
+  Variable 5 No Data = Real -9999.0
+  Variable 5 No Data Tol = Real 100.0
+
+  Exported Variable 1 = -dofs 1 "BedDEM"
+  Exported Variable 2 = -dofs 1 "ZsDEM"
+  Exported Variable 3 = -dofs 1 "millanSpeed"
+  Exported Variable 4 = -dofs 1 "millanVx"
+  Exported Variable 5 = -dofs 1 "millanVy"
+  Exported Variable 6 = -dofs 1 "Thickness"
+End 
+
+
+Solver 5  
+  Equation = "MapCoordinate"
   Exec Solver = Never
-  Procedure = "ElmerIceSolvers" "ComputeNormalSolver"
+  Procedure = "StructuredMeshMapper" "StructuredMeshMapper"
 
-  Variable = String "Normal Vector"
-  Variable DOFs = 3
+  Active Coordinate = Integer 3
+  Mesh Velocity Variable = String "dSdt"
+  Mesh Update Variable = String "dS"
+  Mesh Velocity First Zero = Logical True
 
-  ComputeAll = Logical False
-  Optimize Bandwidth = Logical False
+  Top Surface Variable Name = String "Zs"
+
+  Displacement Mode = Logical False 
+  Correct Surface = Logical True
+  Minimum Height = Real 10.0
 End
-
-
-Solver 5
+ 
+Solver 6
   Equation = "HeightDepth"
   Procedure = "StructuredProjectToPlane" "StructuredProjectToPlane"
   Active Coordinate = Integer 3
-  Operator 1 = Thickness
-  Operator 2 = Depth
+
+  Operator 1 = Depth
+  Operator 2 = Height
+
+End
+
+Solver 7
+  Equation = "Navier-Stokes"
+  Exec Solver = Never
+  
+  Exported Variable 1 = -dofs 1 "dSdt" 
+  Exported Variable 2 = -dofs 1 "dS" 
+  Exported Variable 3 = -dofs 1 "BedDEM"
+  Exported Variable 4 = -dofs 1 "ZsDEM"
+  Exported Variable 5 = -dofs 1 "ZbDEM"
+  Exported Variable 6 = -dofs 1 "bedDEM"
+  Exported Variable 7 = -dofs 7 "StrainRate"
+  Exported Variable 8 = -dofs 1 "depth" 
+  Exported Variable 9 = -dofs 1 "height" 
+
+  Stabilization Method = String Stabilized
+  Flow Model = Stokes
+
+  Linear System Solver = Iterative
+  Linear System Iterative Method = BICGStab
+
+  Linear System Preconditioning = ILU0
+  Linear System Convergence Tolerance = Real 1.0e-8
+  Linear System Max Iterations = 500
+  Linear System Residual Output = 500
+  Linear System Abort Not Converged = True 
+
+  Nonlinear System Max Iterations = 50
+  Nonlinear System Convergence Tolerance  = 1.0e-5
+  !Nonlinear System Newton After Iterations = 5
+  !Nonlinear System Newton After Tolerance = 1.0e-02
+  Nonlinear System Relaxation Factor = 1.0065
+  Nonlinear System Reset Newton = Logical True  
+  Nonlinear System Abort Not Converged = True 
+
+  Steady State Convergence Tolerance = Real 1.0e-3
 End
 
 
-
-
-Solver 6
+Solver 8
   Equation = "Free Surface Top"
   Exec Solver = Never
 
@@ -354,187 +482,120 @@ Solver 6
   Relaxation Factor = Real 1.00       
 End
 
+Solver 9
+  Equation = "NormalVector"
+  Procedure = "ElmerIceSolvers" "ComputeNormalSolver"
+  Exec Solver = "Before Timestep"
+  Variable = String "Normal Vector"
+  Variable DOFs = 3
 
-Solver 7
-  Exec Solver = "Before Simulation"
-  Equation = "Read DEMs"
-  Variable = -nooutput DummyR
-  Procedure = "ElmerIceSolvers" "Grid2DInterpolator"
-
-  ! Bedrock DEM
-  Variable 1 = String "bedDEM"
-  Variable 1 data file = File "../DEMs/hubbard_bed.dat"
-  Variable 1 x0 = Real #x0 
-  Variable 1 y0 = Real #y0 
-  Variable 1 lx = Real #lx 
-  Variable 1 ly = Real #ly 
-  Variable 1 Nx = Integer #nx
-  Variable 1 Ny = Integer #ny
-  Variable 1 Invert = Logical False
-  Variable 1 Fill = Logical False 
-  Variable 1 Position Tol = Real 1.0e-1
-  Variable 1 No Data = Real -9999.0
-  Variable 1 No Data Tol = Real 100.0 
-
-  ! Surface DEM
-  Variable 2 = String "ZsDEM"
-  Variable 2 data file = File "../DEMs/hubbard_surface.dat"
-  Variable 2 x0 = Real #x0 
-  Variable 2 y0 = Real #y0 
-  Variable 2 lx = Real #lx 
-  Variable 2 ly = Real #ly 
-  Variable 2 Nx = Integer #nx
-  Variable 2 Ny = Integer #ny
-  Variable 2 Invert = Logical False
-  Variable 2 Fill = Logical False 
-  Variable 2 Position Tol = Real 1.0e-1
-  Variable 2 No Data = Real -9999.0
-  Variable 2 No Data Tol = Real 100.0
-
-  ! Velocity map
-  Variable 3 = String "Velocity"
-  Variable 3 data file = File "../velocity/millan_v.dat"
-  Variable 3 x0 = Real #x0 
-  Variable 3 y0 = Real #y0 
-  Variable 3 lx = Real #lx 
-  Variable 3 ly = Real #ly 
-  Variable 3 Nx = Integer #nx
-  Variable 3 Ny = Integer #ny
-  Variable 3 Invert = Logical False
-  Variable 3 Fill = Logical False 
-  Variable 3 Position Tol = Real 1.0e-1
-  Variable 3 No Data = Real -9999.0
-  Variable 3 No Data Tol = Real 100.0
-
-  Variable 4 = String "Velocity 1"
-  Variable 4 data file = File "../velocity/millan_vx.dat"
-  Variable 4 x0 = Real #x0 
-  Variable 4 y0 = Real #y0 
-  Variable 4 lx = Real #lx 
-  Variable 4 ly = Real #ly 
-  Variable 4 Nx = Integer #nx
-  Variable 4 Ny = Integer #ny
-  Variable 4 Invert = Logical False
-  Variable 4 Fill = Logical False 
-  Variable 4 Position Tol = Real 1.0e-1
-  Variable 4 No Data = Real -9999.0
-  Variable 4 No Data Tol = Real 100.0
-
-  Variable 5 = String "Velocity 2"
-  Variable 5 data file = File "../velocity/millan_vy.dat"
-  Variable 5 x0 = Real #x0 
-  Variable 5 y0 = Real #y0 
-  Variable 5 lx = Real #lx 
-  Variable 5 ly = Real #ly 
-  Variable 5 Nx = Integer #nx
-  Variable 5 Ny = Integer #ny
-  Variable 5 Invert = Logical False
-  Variable 5 Fill = Logical False 
-  Variable 5 Position Tol = Real 1.0e-1
-  Variable 5 No Data = Real -9999.0
-  Variable 5 No Data Tol = Real 100.0
-
-  Exported Variable 1 = -dofs 1 "BedDEM"
-  Exported Variable 2 = -dofs 1 "ZsDEM"
-  Exported Variable 3 = -dofs 1 "Velocity"
-  Exported Variable 4 = -dofs 1 "Velocity 1"
-  Exported Variable 5 = -dofs 1 "Velocity 2"
-  Exported Variable 6 = -dofs 1 "Thickness"
-  
-End 
-
+  ComputeAll = Logical False
+  Optimize Bandwidth = Logical False
+End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! ice 
 Equation 1
-  Active Solvers(3) = 7 4 5 
+  Active Solvers(5) = 4 5 6 7 9
 End
 
+! Top surface
 Equation 2
- Active Solvers(1) = 6
+  Active Solvers(1) = 8       
+  Flow Solution Name = String "Flow Solution"
+  Convection = String Computed
 End
 
-
+! sheet
 Equation 3
-  Active Solvers(3) = 1 2 3 
+  Active Solvers(3) = 1 2 3
 End
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+! terminus
 Boundary Condition 1
-  Target Boundaries = 1
-  Name = "inflow"
+  Target Boundaries = "terminus"
+  !No Channel BC = Logical True
+  !Hydraulic Potential = Real 0.0
+
+  !If h <= 10 m thick, Hydraulic Potential is fixed
+  ! Hydraulic Potential = Variable bedDEM
+  !   Real LUA "rhow*gravity*tx[0]"
+  ! Hydraulic Potential Condition = Variable Zs, bedDEM
+  !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
+End
+
+! rest of glacier
+Boundary Condition 2
+  Target Boundaries = "grounded"
   !No Channel BC = Logical True
   Hydraulic Potential = Real 0.0
+
+  !If h <= 10 m thick, Hydraulic Potential is fixed
+  ! Hydraulic Potential = Variable bedDEM
+  !   Real LUA "rhow*gravity*tx[0]"
+  ! Hydraulic Potential Condition = Variable Zs, bedDEM
+  !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
 
-Boundary Condition 2
-  !Target Boundaries = 1
-  Name = "inflow"
-  !External Pressure = Variable depth
-  !  Real LUA "-tx[0]*rhoi*gravity"
-  !Mass Consistent Normals = Logical True
-  !Normal-Tangential Velocity = Logical True
-  !Velocity 1 = Real 0.0
-End
-
+! lateral sides of the glacier 
 Boundary Condition 3
-  Name = "bedrock"
-  Bottom Surface = Equals BedDEM   
-  ComputeNormal = Logical True
+  Target Boundaries = "terminus"
+  !Velocity 1 = real 0.0
+  !Velocity 2 = real 0.0
+End
 
-  Velocity 1 = Variable Velocity 1
-   Real LUA "tx[0]"
-  Velocity 2 = Variable Velocity 2
-    Real LUA "tx[0]"
+
+! lateral sides of the glacier 
+Boundary Condition 4
+  !Velocity 1 = real 0.0
+  !Velocity 2 = real 0.0
+End
+
+
+
+
+!! cavity roof and Bedrock 
+Boundary Condition 5
+  Body ID = 3
+  !Bottom Surface Mask = Logical True
+  Bottom Surface = Equals BedDEM
+
+  Save Line = Logical True
 
 ! --------- Coulomb Sliding
 
-!   Normal-Tangential Velocity = Logical True
-!   Flow Force BC = Logical True
+  Normal-Tangential Velocity = Logical True
+  Flow Force BC = Logical True
   
   !! Water pressure given through the Stokes 'External Pressure' parameter 
   !! (Negative = Compressive)
-!   External Pressure = Real 0.0 !Equals Water Pressure
-
-!   Velocity 1 = Real 0.0
+  External Pressure = Equals Water Pressure
+   
+  Velocity 1 = Real 0.0
   
-!   Slip Coefficient 2 =  Variable Coordinate 1
-!     Real Procedure "ElmerIceUSF" "Friction_Coulomb"
-!   Slip Coefficient 3 =  Variable Coordinate 1
-!     Real Procedure "ElmerIceUSF" "Friction_Coulomb"
+  Slip Coefficient 2 =  Variable Coordinate 1
+    Real Procedure "ElmerIceUSF" "Friction_Coulomb"
+  Slip Coefficient 3 =  Variable Coordinate 1
+    Real Procedure "ElmerIceUSF" "Friction_Coulomb"
     
-  ! Parameters needed for the Coulomb Friction Law
-!   Friction Law Sliding Coefficient = Real #As ! larger = more slip 
-!   Friction Law Post-Peak Exponent  = Real #q      !(q=1)
-!   Friction Law Maximum Value = Real #C        !(C=1)
-!   Friction Law PowerLaw Exponent = Real #m       !(m = n = 3 Glen's law) 
-!   Friction Law Linear Velocity = Real 1e-4
+  !! Parameters needed for the Coulomb Friction Law
+  Friction Law Sliding Coefficient = Real #As ! larger = more slip 
+  Friction Law Post-Peak Exponent  = Real #q     !(q=1)
+  Friction Law Maximum Value = Real #C        !(C=1)
+  Friction Law PowerLaw Exponent = Real #m       !(m = n = 3 Glen's law) 
+  Friction Law Linear Velocity = Real 1e-4
 !--------------------------------------------
 
-
-! --------- Weertman sliding
-  !Normal-Tangential Velocity = Logical True
-  !Flow Force BC = Logical True
-
-  !Velocity 1 = Real 0.0
-  
-  ! Slip Coefficient 2 =  Variable Coordinate 1
-  !   Real Procedure "ElmerIceUSF" "Sliding_Weertman"
-  ! Slip Coefficient 3 =  Variable Coordinate 1
-  !    Real Procedure "ElmerIceUSF" "Sliding_Weertman"
-    
-  !Weertman Friction Coefficient = Real 2.5e-2 !2.412579e-2        
-  !Weertman Exponent = Real #1.0/3.0
-  !Weertman Linear Velocity = Real 0.00001
-
-!--------------------------------------------
-
- ! Mass Consistent Normals = Logical True
+  Mass Consistent Normals = Logical True
+  ComputeNormal = Logical True
 End
 
-Boundary Condition 4
-  Name = "surface"
+
+! Upper Surface
+Boundary Condition 6
+!!! this BC is equal to body no. 2 !!!
+  !Body Id = 2
   Top Surface = Equals ZsDEM
 End

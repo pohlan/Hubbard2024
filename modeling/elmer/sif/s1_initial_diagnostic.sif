@@ -23,8 +23,8 @@ Simulation
   Simulation Type = Steady        
 
   Extruded Mesh Levels = Integer #EM ! make vertical resolution finer than horizontal resolution?
-  ! Preserve Edges = Logical True ! saves outline of the domain, useful for GlaDS
-  ! Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
+   Preserve Edges = Logical True ! saves outline of the domain, useful for GlaDS
+   Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
 
   Steady State Min Iterations = 1
   Steady State Max Iterations = 1
@@ -57,14 +57,14 @@ End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Initial Condition 1
-  Pressure = Real 0.0 
+  !Pressure = Real 0.0 
   !Velocity 1 = Real 0.0
   !Velocity 2 = Real 0.0
-  Velocity 1 = Variable millanVx
-   Real LUA "tx"
-  Velocity 2 = Variable millanVy
-    Real LUA "tx"
-  Velocity 3 = Real 0.0 
+  !Velocity 1 = Variable millanVx
+  ! Real LUA "tx"
+  !Velocity 2 = Variable millanVy
+  !  Real LUA "tx"
+  !Velocity 3 = Real 0.0 
   Zs = equals ZsDEM
   Zb = equals bedDEM
 End
@@ -252,7 +252,7 @@ End
 Solver 6
   Equation = "Stokes-Vec"
   Procedure = "IncompressibleNSVec" "IncompressibleNSSolver"
-  !Exec Solver = "Never"
+  Exec Solver = "Never"
   
   Stokes Flow = Logical True
 
@@ -303,9 +303,9 @@ Solver 6
 
   Constant-Viscosity Start = Logical True
 
-  Exported Variable 1 = -dofs 1 "dSdt" 
-  Exported Variable 2 = -dofs 1 "dS"
-  Exported Variable 3 = -dofs 1 "Thickness"
+  !Exported Variable 1 = -dofs 1 "dSdt" 
+  !Exported Variable 2 = -dofs 1 "dS"
+  !Exported Variable 3 = -dofs 1 "Thickness"
 End
 
 
@@ -417,8 +417,8 @@ End
 Boundary Condition 3
   Name = "surface"
   Top Surface = Equals ZsDEM
-  Velocity 1 = Variable millanVx
-   Real LUA "tx"
-  Velocity 2 = Variable millanVy
-   Real LUA "tx"
+ ! Velocity 1 = Variable millanVx
+ !  Real LUA "tx"
+ ! Velocity 2 = Variable millanVy
+ ! Real LUA "tx"
 End

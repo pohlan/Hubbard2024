@@ -1,0 +1,14 @@
+!------ Skeleton for body section -----
+Body 1
+  Name = Domain
+End
+
+!------ Skeleton for boundary section -----
+Boundary Condition 1
+  Name = terminus
+End
+
+Boundary Condition 2
+  Name = grounded
+End
+

@@ -1,4 +1,4 @@
-results/*
+results/*.vtu
 results_glads/*
 results_invert/*
 sif/hubbard_mesh/*.result
