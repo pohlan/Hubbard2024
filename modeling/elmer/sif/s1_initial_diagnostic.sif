@@ -17,7 +17,7 @@ include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
 Header
-  Mesh DB "../mesh" "hubbard_mesh"
+  Mesh DB "." "hubbard_mesh"
   Results Directory "../results"
 End
 
@@ -73,6 +73,8 @@ Initial Condition 1
   Velocity 2 = Variable millanVy
     Real LUA "tx"
   Velocity 3 = Real 0.0 
+  Zs = equals ZsDEM
+  Zb = equals bedDEM
 End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -17,7 +17,7 @@ include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
 Header
-  Mesh DB "../mesh" "hubbard_mesh"
+  Mesh DB "." "hubbard_ice_mesh"
   Results Directory "../results_glads"
 End
 
@@ -32,7 +32,7 @@ Simulation
 
   Extruded Mesh Levels = Integer #EM ! make vertical resolution finer than horizontal resolution?
   ! Preserve Edges = Logical True ! saves outline of the domain, useful for GlaDS
-   Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
+   !Preserve Baseline = Logical True ! saves outline of the domain, useful for GlaDS
 
   Steady State Min Iterations = 1
   Steady State Max Iterations = 1
@@ -60,6 +60,7 @@ Body 2
   Name = "surface"
   Equation = 2
   Body Force = 2
+  Initial Condition = 1
   Material = 1
 End
 
@@ -73,6 +74,8 @@ Initial Condition 1
   Velocity 2 = Variable Velocity 2
     Real LUA "tx"
   Velocity 3 = Real 0.0 
+  Zs = equals ZsDEM 
+  Zb = equals bedDEM 
 End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -375,7 +378,6 @@ Equation 2
   Flow Solution Name = String "Flow Solution"
   Convection = String Computed
 End
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Boundary Condition 1

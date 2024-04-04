@@ -1,9 +1,9 @@
 # To go serial, use this:
-ElmerGrid 14 2 hubbard_mesh.msh -autoclean
-ElmerGrid 14 5 hubbard_mesh.msh -autoclean
+ElmerGrid 14 2 hubbard_ice_mesh.msh -autoclean
+ElmerGrid 14 5 hubbard_ice_mesh.msh -autoclean
 
 # To go parallel, use this:
-#ElmerGrid 14 2 hubbard_mesh.msh -autoclean -metis 4 0 # change first number to determine number of CPUs
-#ElmerGrid 14 5 hubbard_mesh.msh -autoclean -metis 4 0
+#ElmerGrid 14 2 hubbard_ice_mesh.msh -autoclean -metis 4 0 # change first number to determine number of CPUs
+#ElmerGrid 14 5 hubbard_ice_mesh.msh -autoclean -metis 4 0
 
 
