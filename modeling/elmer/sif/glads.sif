@@ -5,8 +5,6 @@ echo on
 ! Name of output files
 $Step = "glads"
 
-$namerun = "synthTR"
-
 include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
@@ -258,12 +256,12 @@ Solver 1
   Linear System Abort Not Converged = True 
 
   Nonlinear System Max Iterations = 50
-  Nonlinear System Convergence Tolerance  = 1.0e-2
+  Nonlinear System Convergence Tolerance  = 1.0e-4
   Nonlinear System Relaxation Factor = 0.5
   Nonlinear System Abort Not Converged = False 
 
-  Coupled Max Iterations = Integer 10
-  Coupled Convergence Tolerance = Real 1.0e-3
+  Coupled Max Iterations = Integer 20
+  Coupled Convergence Tolerance = Real 1.0e-4
 
   Steady State Convergence Tolerance = 1.0e-03
 End
@@ -514,22 +512,22 @@ End
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! terminus
 Boundary Condition 1
-  Target Boundaries = "terminus"
+  Target Boundaries = 1
   !No Channel BC = Logical True
   !Hydraulic Potential = Real 0.0
 
   !If h <= 10 m thick, Hydraulic Potential is fixed
-  ! Hydraulic Potential = Variable bedDEM
-  !   Real LUA "rhow*gravity*tx[0]"
-  ! Hydraulic Potential Condition = Variable Zs, bedDEM
-  !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
+   Hydraulic Potential = Variable bedDEM
+     Real LUA "rhow*gravity*tx[0]"
+   Hydraulic Potential Condition = Variable Zs, bedDEM
+     Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
 ! rest of glacier
 Boundary Condition 2
-  Target Boundaries = "grounded"
-  !No Channel BC = Logical True
-  Hydraulic Potential = Real 0.0
+  Target Boundaries = 2
+  No Channel BC = Logical True
+  !Hydraulic Potential = Real 0.0
 
   !If h <= 10 m thick, Hydraulic Potential is fixed
   ! Hydraulic Potential = Variable bedDEM
@@ -541,7 +539,7 @@ End
 
 ! lateral sides of the glacier 
 Boundary Condition 3
-  Target Boundaries = "terminus"
+ ! Target Boundaries =1
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
@@ -549,6 +547,7 @@ End
 
 ! lateral sides of the glacier 
 Boundary Condition 4
+!Target Boundaries = 2
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End

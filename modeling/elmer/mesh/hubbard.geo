@@ -79,6 +79,6 @@ Field[NF].TextFormat = 0;
 Field[NF].FileName = "/Users/amyjenson/Documents/GitHub/Hubbard2024/modeling/elmer/mesh/hubbard.dat";
 Background Field = NF;
 Plane Surface(IS) = {ILL:ILL+0};
-Physical Surface("Domain") = {IS};
+Physical Surface(1) = {IS};
 Physical Line("terminus") = {IL + 0};
 Physical Line("grounded") = {IL + 1};
