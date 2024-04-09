@@ -138,12 +138,12 @@ Body Force 3
 
 
    !If h <= 10 m thick, Hydraulic Potential is fixed
-   Hydraulic Potential = Variable bedDEM
-     Real LUA "rhow*gravity*tx[0]"
+   !Hydraulic Potential = Variable bedDEM
+   !  Real LUA "rhow*gravity*tx[0]"
    !Hydraulic Potential Condition = Variable Depth, Height 
    !Real LUA "(function() if tx[0]+tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
-   Hydraulic Potential Condition = Variable Zs, bedDEM
-     Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
+  ! Hydraulic Potential Condition = Variable Zs, bedDEM
+  !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -9,7 +9,7 @@ include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
 !timestep in years
-#dt = 0.5/365
+#dt = 0.1/365
 
 Header
   Mesh DB "." "hubbard"
@@ -39,7 +39,7 @@ Simulation
 
   Timestepping Method = "bdf"
   BDF Order = 1
-  TimeStep intervals = 730 ! one year 
+  TimeStep intervals = 365*10 ! one year 
   Timestep Sizes = Real #dt
   Output Intervals = 1 
 
@@ -132,12 +132,12 @@ Body Force 3
     Real Procedure "../solvers/ComputeSource" "BasalSource"
 
    !If h <= 10 m thick, Hydraulic Potential is fixed
-   Hydraulic Potential = Variable bedDEM
-     Real LUA "rhow*gravity*tx[0]"
+   !Hydraulic Potential = Variable bedDEM
+    ! Real LUA "rhow*gravity*tx[0]"
    !Hydraulic Potential Condition = Variable Depth, Height 
    !Real LUA "(function() if tx[0]+tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
-   Hydraulic Potential Condition = Variable Zs, bedDEM
-     Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
+   !Hydraulic Potential Condition = Variable Zs, bedDEM
+    ! Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
