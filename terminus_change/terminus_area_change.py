@@ -91,27 +91,25 @@ df_areas = pd.DataFrame(list_areas)
 df_areas = df_areas.sort_values(by=["Date"])
 
 # prepare lowess filter to smooth time series, easier on day index rather than datetime format
-lowess = sm.nonparametric.lowess
 t0 = dt.datetime.strptime("2017-01-01", "%Y-%m-%d").date()
-t_index = np.zeros(len(df_areas.Date))
+t_index_data   = np.zeros(len(df_areas.Date), dtype=int)
 for (i, da) in enumerate(df_areas.Date):
     deltat = da - t0
-    t_index[i] = deltat.days
+    t_index_data[i] = deltat.days
+
+t_smooth = pd.date_range(start=df_areas.Date[0], end=df_areas.Date[len(df_areas.Date)-1], freq="10D").date
+t_index_smooth = np.zeros(len(t_smooth), dtype=int)
+for (i, da) in enumerate(t_smooth):
+    deltat = da - t0
+    t_index_smooth[i] = deltat.days
 
 # smooth and plot
-df_terminus_smooth = pd.DataFrame({"Date":df_areas.Date})
-plt.figure(figsize=(15,10))
-plt.rcParams['font.size'] = 14
+lowess = sm.nonparametric.lowess
+df_terminus_smooth = pd.DataFrame({"Date":t_smooth})
 cols = ["brown", "pink", "darkgreen", "lightgreen", "grey"]    # only give four colours to only plot the first four sections
 for (s,c) in zip(df_sec.section,cols):
-    z = lowess(df_areas[s] - np.mean(df_areas[s]), t_index, frac=1/20, xvals=t_index)
+    z = lowess(df_areas[s] - np.mean(df_areas[s]), t_index_data, frac=1/20, xvals=t_index_smooth)
     df_terminus_smooth[s+" [m]"] = z
-    plt.plot(df_areas.Date, z, label=s, color=c)
-    plt.legend()
-plt.ylim(-330,230)
-plt.ylabel("rel. terminus pos. [m]")
-plt.xlabel("Date")
-plt.savefig(fig_path + "smoothed_termini.jpg")
 
 # save smoothed time series
 df_terminus_smooth.to_csv(data_path+"terminus_position_smooth.csv", index=False)
