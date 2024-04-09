@@ -3,7 +3,7 @@ echo on
 
 
 ! Name of output files
-$Step = "glads"
+$Step = "glads_evolve"
 
 include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
@@ -39,7 +39,7 @@ Simulation
 
   Timestepping Method = "bdf"
   BDF Order = 1
-  TimeStep intervals = 730
+  TimeStep intervals = 100 ! 5 days 
   Timestep Sizes = Real #dt
   Output Intervals = 1 
 
@@ -51,10 +51,10 @@ Simulation
 
   ! We need a restart to have the ZsDEM and ZbDEM variables for
   ! the initial condition of Zs and Zb 
-  !Restart File = "step1.result"
-  !Restart Position = 0
-  !Restart Time = Real 0.0
-  !Restart Before Initial Conditions = Logical True
+  Restart File = "glads_spinup.result"
+  Restart Position = 0
+  Restart Time = Real 0.0
+  Restart Before Initial Conditions = Logical True
   max output level = 3
 
   Dirty Finish = Logical True
@@ -105,11 +105,7 @@ End
 Initial Condition 3
   Zb = Equals bedDEM
 
-  Sheet Thickness = Real #Hs
-
-! Moulin are active if > 1.0
-! Moulin can only be activated
-   Active Moulin = Real 1.0
+ ! Sheet Thickness = Real #Hs
 
 End
 
@@ -132,10 +128,8 @@ End
 Body Force 3
    Hydraulic Potential Volume Source = Real #Source
 
-! try using variable source for spin up and less water in baseline source
-!   Hydraulic Potential Volume Source = Variable Zs
-!    Real Procedure "../solvers/ComputeSource" "BasalSource"
-
+   Hydraulic Potential Volume Source = Variable Zs
+    Real Procedure "../solvers/ComputeSource" "BasalSource"
 
    !If h <= 10 m thick, Hydraulic Potential is fixed
    Hydraulic Potential = Variable bedDEM
@@ -378,7 +372,7 @@ Solver 4
   Exported Variable 3 = -dofs 1 "millanSpeed"
   Exported Variable 4 = -dofs 1 "millanVx"
   Exported Variable 5 = -dofs 1 "millanVy"
-  Exported Variable 6 = -dofs 1 "Thickness"
+  !Exported Variable 6 = -dofs 1 "Thickness"
 End 
 
 
@@ -405,8 +399,8 @@ Solver 6
   Active Coordinate = Integer 3
 
   Operator 1 = Depth
-  Operator 2 = Height
-
+  !Operator 2 = Height
+  !Operator 3 = Thickness
 End
 
 Solver 7
@@ -420,8 +414,8 @@ Solver 7
   Exported Variable 5 = -dofs 1 "ZbDEM"
   Exported Variable 6 = -dofs 1 "bedDEM"
   Exported Variable 7 = -dofs 7 "StrainRate"
-  Exported Variable 8 = -dofs 1 "depth" 
-  Exported Variable 9 = -dofs 1 "height" 
+  !Exported Variable 8 = -dofs 1 "depth" 
+  !Exported Variable 9 = -dofs 1 "height" 
 
   Stabilization Method = String Stabilized
   Flow Model = Stokes
@@ -539,7 +533,7 @@ End
 Boundary Condition 3
   Name = "moulins"
   !Target Boundaries(1) = 3
-  Moulin Storage = Logical True
+  Moulin Storage = Logical False ! True
   Moulin Area = Real #Am
   Moulin Flux = Real #4.5*yearinsec
 End
