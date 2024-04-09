@@ -251,7 +251,7 @@ Solver 1
 
   Nonlinear System Max Iterations = 20
   Nonlinear System Convergence Tolerance  = 1.0e-4
-  Nonlinear System Relaxation Factor = 0.75
+  Nonlinear System Relaxation Factor = 1.0
   Nonlinear System Abort Not Converged = False 
 
   Coupled Max Iterations = Integer 20
@@ -507,7 +507,7 @@ End
 ! terminus
 Boundary Condition 1
   Target Boundaries = 1
-  !No Channel BC = Logical True
+  No Channel BC = Logical True
   Hydraulic Potential = Real 0.0
 
   !If h <= 10 m thick, Hydraulic Potential is fixed

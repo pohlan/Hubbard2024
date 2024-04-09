@@ -165,6 +165,8 @@ Material 1
   Constant Temperature = Real 0.0
 
   Cauchy = Logical True 
+	
+  Sea Level = real 0.0 
 
   ! Bed condition
   Min Zb = Equals BedDEM
@@ -256,12 +258,12 @@ Solver 1
   Linear System Abort Not Converged = True 
 
   Nonlinear System Max Iterations = 20
-  Nonlinear System Convergence Tolerance  = 1.0e-4
-  Nonlinear System Relaxation Factor = 0.75
+  Nonlinear System Convergence Tolerance  = 1.0e-5
+  Nonlinear System Relaxation Factor = 1.0
   Nonlinear System Abort Not Converged = False 
 
   Coupled Max Iterations = Integer 20
-  Coupled Convergence Tolerance = Real 1.0e-4
+  Coupled Convergence Tolerance = Real 1.0e-5
 
   Steady State Convergence Tolerance = 1.0e-04
 End
@@ -513,7 +515,7 @@ End
 ! terminus
 Boundary Condition 1
   Target Boundaries = 1
-  !No Channel BC = Logical True
+  No Channel BC = Logical True
   Hydraulic Potential = Real 0.0
 
   !If h <= 10 m thick, Hydraulic Potential is fixed
