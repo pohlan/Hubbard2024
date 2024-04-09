@@ -9,7 +9,7 @@ include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
 !timestep in years
-#dt = 0.5/365.25
+#dt = 0.05/365.25
 
 Header
   Mesh DB "." "hubbard"
@@ -255,15 +255,15 @@ Solver 1
   Linear System Direct Method = umfpack
   Linear System Abort Not Converged = True 
 
-  Nonlinear System Max Iterations = 50
+  Nonlinear System Max Iterations = 20
   Nonlinear System Convergence Tolerance  = 1.0e-4
-  Nonlinear System Relaxation Factor = 0.5
+  Nonlinear System Relaxation Factor = 0.75
   Nonlinear System Abort Not Converged = False 
 
   Coupled Max Iterations = Integer 20
   Coupled Convergence Tolerance = Real 1.0e-4
 
-  Steady State Convergence Tolerance = 1.0e-03
+  Steady State Convergence Tolerance = 1.0e-04
 End
 
 
@@ -514,13 +514,13 @@ End
 Boundary Condition 1
   Target Boundaries = 1
   !No Channel BC = Logical True
-  !Hydraulic Potential = Real 0.0
+  Hydraulic Potential = Real 0.0
 
   !If h <= 10 m thick, Hydraulic Potential is fixed
-   Hydraulic Potential = Variable bedDEM
-     Real LUA "rhow*gravity*tx[0]"
-   Hydraulic Potential Condition = Variable Zs, bedDEM
-     Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
+   !Hydraulic Potential = Variable bedDEM
+   !  Real LUA "rhow*gravity*tx[0]"
+   !Hydraulic Potential Condition = Variable Zs, bedDEM
+   !  Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
 ! rest of glacier
@@ -536,27 +536,32 @@ Boundary Condition 2
   !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
-
-! lateral sides of the glacier 
 Boundary Condition 3
+  Name = "moulins"
+  !Target Boundaries(1) = 3
+  Moulin Storage = Logical True
+  Moulin Area = Real #Am
+  Moulin Flux = Real #4.5*yearinsec
+End
+
+! terminus
+Boundary Condition 4
  ! Target Boundaries =1
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
 
 
-! lateral sides of the glacier 
-Boundary Condition 4
+! rest of glacier
+Boundary Condition 5
 !Target Boundaries = 2
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
 
 
-
-
 !! cavity roof and Bedrock 
-Boundary Condition 5
+Boundary Condition 6
   Body ID = 3
   !Bottom Surface Mask = Logical True
   Bottom Surface = Equals BedDEM
@@ -593,7 +598,7 @@ End
 
 
 ! Upper Surface
-Boundary Condition 6
+Boundary Condition 7
 !!! this BC is equal to body no. 2 !!!
   !Body Id = 2
   Top Surface = Equals ZsDEM
