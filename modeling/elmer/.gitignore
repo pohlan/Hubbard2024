@@ -3,6 +3,7 @@ results_glads/*
 results_invert/*
 sif/hubbard_mesh/*.result
 glads/hubbard_mesh/*.result
+sif/hubbard/*.result
 sif/hubbard_ice_mesh/*.result
 glads/hubbard_ice_mesh/*.result
 invert/hubbard_mesh/*.result
