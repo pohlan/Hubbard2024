@@ -9,7 +9,7 @@ include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
 !timestep in years
-#dt = 0.05/365.25
+#dt = 0.5/365
 
 Header
   Mesh DB "." "hubbard"
@@ -39,7 +39,7 @@ Simulation
 
   Timestepping Method = "bdf"
   BDF Order = 1
-  TimeStep intervals = 100 ! 5 days 
+  TimeStep intervals = 730 ! one year 
   Timestep Sizes = Real #dt
   Output Intervals = 1 
 
