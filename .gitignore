@@ -202,3 +202,7 @@ cython_debug/
 
 # bathymetry data
 *.bag
+
+# slurm files for batch processing ICESat-2
+*slurm*.bash
+dems/slurm_rasterize_IS2_2018-10-14.bash
