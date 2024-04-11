@@ -193,6 +193,7 @@ cython_debug/
 # other
 *.csv
 *.mat
+*.dat
 
 # QGIS files
 *.aux.xml
@@ -206,3 +207,12 @@ cython_debug/
 # slurm files for batch processing ICESat-2
 *slurm*.bash
 dems/slurm_rasterize_IS2_2018-10-14.bash
+
+# mesh files and helper files
+*.geo
+*.msh
+
+# model output
+*.vtu
+*.pvd
+*.h5
