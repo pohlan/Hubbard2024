@@ -31,7 +31,8 @@ def createDat(file):
     x_flat = X.flatten()
     y_flat = Y.flatten()
     elev_flat = elevation.flatten()
-
+    elev_flat = np.nan_to_num(elev_flat, nan=-9999.00)
+    
     np.savetxt(file[:-4] + '.dat',np.column_stack((x_flat, y_flat, elev_flat)), fmt="%10.2f %10.2f %10.2f")
     
     # Calculate parameters for SIF file
@@ -80,7 +81,10 @@ def createDat(file):
 #%%
 # create dat files
 
-bedDEM = './hubbard_bed.tif'
+#bedDEM = './hubbard_bed.tif'
+#createDat(bedDEM)
+
+bedDEM = './hubbard_bed_icebridge.tif'
 createDat(bedDEM)
 
 surfDEM = './hubbard_surface.tif'

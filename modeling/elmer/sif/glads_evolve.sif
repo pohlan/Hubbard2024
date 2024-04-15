@@ -35,6 +35,7 @@ Simulation
   Simulation Type = Transient     
 
   Extruded Mesh Levels = Integer #EM
+  Preserve Edges = Logical True
   Preserve Baseline = Logical True
 
   Timestepping Method = "bdf"
@@ -230,7 +231,7 @@ Solver 1
 
  Min Sheet Height = Real 0.01
  Limit Negative Effective Pressure = Logical False !True 
- Max Channel Area = Real 10.0
+ !Max Channel Area = Real 10.0
 
 ! choices are EXPLICT, CRANK-NICOLSON, IMPLICIT
   Channels Integration method = String "Crank-Nicolson"
@@ -250,12 +251,12 @@ Solver 1
   Linear System Abort Not Converged = True 
 
   Nonlinear System Max Iterations = 20
-  Nonlinear System Convergence Tolerance  = 1.0e-4
+  Nonlinear System Convergence Tolerance  = 1.0e-5
   Nonlinear System Relaxation Factor = 1.0
   Nonlinear System Abort Not Converged = False 
 
   Coupled Max Iterations = Integer 20
-  Coupled Convergence Tolerance = Real 1.0e-4
+  Coupled Convergence Tolerance = Real 1.0e-5
 
   Steady State Convergence Tolerance = 1.0e-04
 End
@@ -530,32 +531,32 @@ Boundary Condition 2
   !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
-Boundary Condition 3
-  Name = "moulins"
-  !Target Boundaries(1) = 3
-  Moulin Storage = Logical False ! True
-  Moulin Area = Real #Am
-  Moulin Flux = Real #4.5*yearinsec
-End
+!Boundary Condition 3
+!  Name = "moulins"
+!  !Target Boundaries(1) = 3
+!  Moulin Storage = Logical False ! True
+!  Moulin Area = Real #Am
+!  Moulin Flux = Real #4.5*yearinsec
+!End
 
 ! terminus
-Boundary Condition 4
- ! Target Boundaries =1
+Boundary Condition 3
+ ! Target Boundaries = 3
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
 
 
 ! rest of glacier
-Boundary Condition 5
-!Target Boundaries = 2
+Boundary Condition 4
+!Target Boundaries = 4
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
 
 
 !! cavity roof and Bedrock 
-Boundary Condition 6
+Boundary Condition 5
   Body ID = 3
   !Bottom Surface Mask = Logical True
   Bottom Surface = Equals BedDEM
@@ -592,7 +593,7 @@ End
 
 
 ! Upper Surface
-Boundary Condition 7
+Boundary Condition 6
 !!! this BC is equal to body no. 2 !!!
   !Body Id = 2
   Top Surface = Equals ZsDEM

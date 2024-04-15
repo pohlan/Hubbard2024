@@ -35,6 +35,7 @@ Simulation
   Simulation Type = Transient     
 
   Extruded Mesh Levels = Integer #EM
+  Preserve Edges = Logical True
   Preserve Baseline = Logical True
 
   Timestepping Method = "bdf"
@@ -93,19 +94,23 @@ Initial Condition 1
 !Velocity 1 = Real 0.0 
 ! Velocity 2 = Real 0.0 
 ! Velocity 3 = Real 0.0
-! Zb = Equals bedDEM
-  Zs = Equals ZsDEM
-  Zb = Equals bedDEM
+  Zs = Equals ZsDEM 
+  Zb = Equals bedDEM 
+
+  !Zb = Variable bedDEM 
+  !Real LUA "tx[0] + 1000"
+  !Zs = Variable ZsDEM 
+  !Real LUA "tx[0] + 1000"
 End
 
 Initial Condition 2
- Zs = Equals ZsDEM
+
 End
 
 Initial Condition 3
-  Zb = Equals bedDEM
 
   Sheet Thickness = Real #Hs
+  Hydraulic Potential = Real 0.0 
 
 ! Moulin are active if > 1.0
 ! Moulin can only be activated
@@ -144,6 +149,7 @@ Body Force 3
    !Real LUA "(function() if tx[0]+tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
   ! Hydraulic Potential Condition = Variable Zs, bedDEM
   !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
+
 End
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -238,7 +244,7 @@ Solver 1
 
  Min Sheet Height = Real 0.01
  Limit Negative Effective Pressure = Logical False !True 
- Max Channel Area = Real 10.0
+ !Max Channel Area = Real 10.0
 
 ! choices are EXPLICT, CRANK-NICOLSON, IMPLICIT
   Channels Integration method = String "Crank-Nicolson"
@@ -304,7 +310,7 @@ Solver 4
 
  ! Bedrock DEM
   Variable 1 = String "bedDEM"
-  Variable 1 data file = File "../DEMs/hubbard_bed.dat"
+  Variable 1 data file = File "../DEMs/hubbard_bed_icebridge.dat"
   Variable 1 x0 = Real #x0 
   Variable 1 y0 = Real #y0 
   Variable 1 lx = Real #lx 
@@ -515,7 +521,7 @@ End
 ! terminus
 Boundary Condition 1
   Target Boundaries = 1
-  No Channel BC = Logical True
+  !No Channel BC = Logical True
   Hydraulic Potential = Real 0.0
 
   !If h <= 10 m thick, Hydraulic Potential is fixed
@@ -538,35 +544,38 @@ Boundary Condition 2
   !   Real LUA "(function() if tx[0]-tx[1] > (Hmin) then return -1.0 else return 1.0 end end)()" 
 End
 
-Boundary Condition 3
-  Name = "moulins"
-  !Target Boundaries(1) = 3
-  Moulin Storage = Logical False ! True
-  Moulin Area = Real #Am
-  Moulin Flux = Real #4.5*yearinsec
-End
+!Boundary Condition 3
+!  Name = "moulins"
+!  !Target Boundaries(1) = 3
+!  Moulin Storage = Logical False ! True
+!  Moulin Area = Real #Am
+!  Moulin Flux = Real #4.5*yearinsec
+!End
 
 ! terminus
-Boundary Condition 4
- ! Target Boundaries =1
+Boundary Condition 3
+ ! Target Boundaries = 3
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
 
 
 ! rest of glacier
-Boundary Condition 5
-!Target Boundaries = 2
+Boundary Condition 4
+!Target Boundaries = 4
   !Velocity 1 = real 0.0
   !Velocity 2 = real 0.0
 End
 
 
 !! cavity roof and Bedrock 
-Boundary Condition 6
+Boundary Condition 5
   Body ID = 3
   !Bottom Surface Mask = Logical True
   Bottom Surface = Equals BedDEM
+  !Bottom Surface = Variable bedDEM 
+  !Real LUA "tx[0] + 1000"
+
 
   Save Line = Logical True
 
@@ -600,8 +609,10 @@ End
 
 
 ! Upper Surface
-Boundary Condition 7
+Boundary Condition 6
 !!! this BC is equal to body no. 2 !!!
   !Body Id = 2
   Top Surface = Equals ZsDEM
+  !Top Surface = Variable ZsDEM 
+  !Real LUA "tx[0] + 1000"
 End
