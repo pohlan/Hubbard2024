@@ -244,7 +244,7 @@ Solver 1
 
  Min Sheet Height = Real 0.01
  Limit Negative Effective Pressure = Logical False !True 
- !Max Channel Area = Real 10.0
+ Max Channel Area = Real 10.0
 
 ! choices are EXPLICT, CRANK-NICOLSON, IMPLICIT
   Channels Integration method = String "Crank-Nicolson"
