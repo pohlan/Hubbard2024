@@ -1,6 +1,13 @@
 Prepare DEMs to be loaded into Elmer
 
+If you want the entire domain: 
 exported csv containing XY coordinates of outline of domain. Get this from QGIS using "Polygon to Line" and QChainage around the geopackage of domain in ../DEMs/hubbard_outline.gpkg. 
+
+If you want just the ice: 
+Create a shape file with the desired domain. Export as csv as xy. 
+
+If you want different boundaries: 
+Use gmsh plug in QGIS to get geo file and make the rest. 
 
 
 s0 -  Convert csv file from QGIS to dat file containing just XY coordinates

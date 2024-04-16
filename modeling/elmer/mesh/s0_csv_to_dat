@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Input CSV file
-input_file="./outline/hubbard_onlyice.csv"
+input_file="./outline/hubbard_onlyice2.csv"
 
 # Output .dat file
 output_file="./outline/hubbard_ice_contour.dat"
