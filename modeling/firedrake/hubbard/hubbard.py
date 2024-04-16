@@ -37,9 +37,9 @@ class Hubbard:
                   'theta': 1.0,
                   'thklim': 1e-3,
                   'alpha': 1000.0,
-                  'z_sea': -10,
+                  'z_sea': 0,
                   'calve': True,
-                  'ssa': False}
+                  'ssa': True}
           
         model = self.model = CoupledModel(mesh,**config)
         
@@ -53,7 +53,7 @@ class Hubbard:
          
         model.beta2.interpolate(df.Constant(100.0))
 
-        z_ela = 1.0 #2.5
+        z_ela = 1
 
         if conservation_test:
             lapse_rate=0.0
@@ -107,8 +107,8 @@ class Hubbard:
         adot_file.write(model.adot,time=0.)
 
         t = 0.0
-        t_end = 600
-        dt = 5
+        t_end = 300
+        dt = 1
         max_step = 10.0
 
         with df.CheckpointFile(f"{results_dir}/functions.h5", 'w') as afile:
@@ -128,7 +128,7 @@ class Hubbard:
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .75 * min(1, t/150)
+                model.adot.dat.data[mask] = .1 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,
