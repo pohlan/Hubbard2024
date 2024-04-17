@@ -63,7 +63,7 @@
 #m = 3 !3.25          ! power law exponent 
 
 !Source Term
-#Source = 0.01 ! m/a 
+#Source = 0.03! m/a 
 
 !flux into upper boundary
 #influx = 100000.0 ! m^2/yr (flux per unit width entering the upstream boundary)
