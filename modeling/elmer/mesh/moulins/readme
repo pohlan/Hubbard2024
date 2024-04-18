@@ -1,0 +1,11 @@
+Prepare DEMs to be loaded into Elmer
+
+Create shapefile with moulins, and shapefile with contour of glacier with different physical boundaries
+
+Use gmsh plug in QGIS to get geo file with boundaries and moulins
+
+Create mesh with gmsh
+
+Create elmer mesh with ElmerGrid
+
+Run makemoulins.py

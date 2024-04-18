@@ -2,6 +2,9 @@ Prepare DEMs to be loaded into Elmer
 
 s1 -  Subset surface DEM (ifsar) to hubbard outline using hubbard_outline geopackage
 s2 - Crop thickness from full RGI of SC AK to just hubbard polygon
-s3 - Smooth thickness (why? Ask Jason) 
+s3 - Smooth thickness to remove surface artifacts
 s4 - subtract thickness from surface to get bed 
 s5 - Reformat bed and surface DEM to text file elmer can read 
+
+If you want to use a beddEM from icebridge data instead of Milan, then run s0 and then s5. 
+s0 - crop tif to geopackage and reproject

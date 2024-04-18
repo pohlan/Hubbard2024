@@ -1,0 +1,5 @@
+#!/bin/bash
+
+conda activate elmer
+
+python makemoulin.py --meshdir hubbard  --moulin moulin.xy  --partition 1

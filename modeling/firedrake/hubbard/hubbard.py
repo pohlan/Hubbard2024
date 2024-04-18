@@ -1,7 +1,7 @@
 import os
 import sys
 os.environ['OMP_NUM_THREADS'] = '1'
-sys.path.append('/home/mchristo/proj/ms/SpecEIS')
+sys.path.append('../../../../SpecEIS')
 import firedrake as df
 import rasterio as rio
 from firedrake.petsc import PETSc
@@ -29,7 +29,7 @@ class Hubbard:
 
         config = {'solver_type': 'gmres',
                   'velocity_function_space':'MTW',
-                  'sliding_law': 'linear',
+                  'sliding_law': 'Budd',
                   'vel_scale': 100.,
                   'thk_scale': 1000.,
                   'len_scale': 1000.,
@@ -39,7 +39,7 @@ class Hubbard:
                   'alpha': 1000.0,
                   'z_sea': 0,
                   'calve': True,
-                  'ssa': True}
+                  'ssa': False}
           
         model = self.model = CoupledModel(mesh,**config)
         
@@ -53,7 +53,7 @@ class Hubbard:
          
         model.beta2.interpolate(df.Constant(100.0))
 
-        z_ela = 2.5
+        z_ela = 2
 
         if conservation_test:
             lapse_rate=0.0
@@ -107,8 +107,9 @@ class Hubbard:
         adot_file.write(model.adot,time=0.)
 
         t = 0.0
+        t_grow = 300
         t_end = 600
-        dt = 5
+        dt = 1
         max_step = 10.0
 
         with df.CheckpointFile(f"{results_dir}/functions.h5", 'w') as afile:
@@ -128,7 +129,7 @@ class Hubbard:
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .1 * min(1, t/150)
+                model.adot.dat.data[mask] = .15 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,
