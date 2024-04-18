@@ -51,7 +51,7 @@ class Hubbard:
                 H_in = afile.load_function(mesh, "H0", idx=399)
                 model.H0.assign(H_in)
          
-        model.beta2.interpolate(df.Constant(100.0))
+        model.beta2.interpolate(df.Constant(200.0))
 
         z_ela = 2
 
@@ -79,7 +79,7 @@ class Hubbard:
 
         # Hubbard
         mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-        model.adot.dat.data[mask] = 0#.5 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0#.75 * min(1, dt/50)
 
         #model.adot.dat.data[:] = (((model.B.dat.data[:] + model.H0.dat.data[:]) 
         #                            - z_ela)*lapse_rate)
@@ -108,9 +108,9 @@ class Hubbard:
 
         t = 0.0
         t_grow = 300
-        t_end = 600
-        dt = 1
-        max_step = 10.0
+        t_end = 1000
+        dt = 10
+        max_step = 20.0
 
         with df.CheckpointFile(f"{results_dir}/functions.h5", 'w') as afile:
 
@@ -129,7 +129,7 @@ class Hubbard:
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .15 * min(1, t/150)
+                model.adot.dat.data[mask] = .2 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,
