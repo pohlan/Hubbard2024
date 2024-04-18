@@ -1,0 +1,41 @@
+from rasterio.plot import show
+import rasterio as rio
+from rasterio.enums import Resampling
+from pyproj import Transformer
+
+def pct_clip(array,pct=[2,98]):
+    array_min, array_max = np.nanpercentile(array,pct[0]), 
+np.nanpercentile(array,pct[1])
+    clip = (array - array_min) / (array_max - array_min)
+    clip[clip>1]=1
+    clip[clip<0]=0
+    return clip
+
+with 
+rio.open('/home/martin/projects/Hubbard2024/images/Planet_Hubbard.tif') as 
+src:
+    with rio.open(
+            'RGB_Temp.tif', 'w+',
+            driver='GTiff',
+            dtype= rio.float32,
+            count=3,
+            crs = src.crs,
+            width=src.width,
+            height=src.height,
+            transform=src.transform,
+        ) as dst:
+        V = pct_clip(src.read(1))
+        dst.write(V,1)
+        V = pct_clip(src.read(2))
+        dst.write(V,2)
+        V = pct_clip(src.read(3))
+        dst.write(V,3)
+        
+fig,ax=plt.subplots(figsize=(20,16))
+with rio.open("RGB_Temp.tif") as src2:
+    show(src2.read(),transform=src2.transform,ax=ax)
+    
+transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
+x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
+ax.plot(x,y,'r')
+plt.savefig('map.png')
