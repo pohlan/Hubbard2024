@@ -1,19 +1,21 @@
 from rasterio.plot import show
+import numpy as np
+import matplotlib.pyplot as plt
 import rasterio as rio
 from rasterio.enums import Resampling
 from pyproj import Transformer
+from rasterio.windows import Window
 
 def pct_clip(array,pct=[2,98]):
-    array_min, array_max = np.nanpercentile(array,pct[0]), 
-np.nanpercentile(array,pct[1])
+    array_min, array_max = np.nanpercentile(array,pct[0]), np.nanpercentile(array,pct[1])
     clip = (array - array_min) / (array_max - array_min)
     clip[clip>1]=1
     clip[clip<0]=0
     return clip
 
-with 
-rio.open('/home/martin/projects/Hubbard2024/images/Planet_Hubbard.tif') as 
-src:
+with rio.open('Planet_Hubbard.tif') as src:
+
+
     with rio.open(
             'RGB_Temp.tif', 'w+',
             driver='GTiff',
@@ -33,9 +35,20 @@ src:
         
 fig,ax=plt.subplots(figsize=(20,16))
 with rio.open("RGB_Temp.tif") as src2:
+    # Define the window to crop
+    window = Window.from_slices(slice(0, src.height), slice(0, src.width),
+                                 ((6.65e6, 6.67e6), (575000, 600000)))
+
+    # Read the windowed data
+    data_windowed = src2.read(window=window)
+
+    # Update the transform to reflect the new window
+    transform = src2.window_transform(window)
+
     show(src2.read(),transform=src2.transform,ax=ax)
-    
-transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
-x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
-ax.plot(x,y,'r')
-plt.savefig('map.png')
+
+
+#transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
+#x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
+#ax.plot(x,y,'r')
+plt.savefig('map.png', bbox_inches='tight')
