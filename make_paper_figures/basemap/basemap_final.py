@@ -13,7 +13,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 #from matplotlib.transforms import Affine2D
 
 
-fs = 18 #font size
+fs = 24 #font size
 
 def pct_clip(array,pct=[2,98]):
     array_min, array_max = np.nanpercentile(array,pct[0]), np.nanpercentile(array,pct[1])
@@ -56,6 +56,19 @@ with rio.open("RGB_Temp.tif") as src2:
 #transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
 #x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
 #ax.plot(x,y,'r')
+
+
+########################
+# add points for velocity plots 
+
+# pick points along the flow line in QGIS
+# plug in these coordinates to victors velocity datacube
+
+#ax.scatter([590839], [6657969], alpha=1, c='blue', s=100)
+
+#ax.scatter([590839], [6657969], alpha=1, c='orange', s=100)    
+
+#ax.scatter([590839], [6657969], alpha=1, c='black', s=100)  
 
 ########################
 # add inset map 
