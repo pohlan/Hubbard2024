@@ -37,7 +37,7 @@ class Hubbard:
                   'theta': 1.0,
                   'thklim': 1e-3,
                   'alpha': 1000.0,
-                  'z_sea': -5,
+                  'z_sea': 0,
                   'calve': True,
                   'ssa': False}
           
@@ -79,7 +79,7 @@ class Hubbard:
 
         # Hubbard
         mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-        model.adot.dat.data[mask] = 0#.1 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0#.075 * min(1, dt/50)
 
         #model.adot.dat.data[:] = (((model.B.dat.data[:] + model.H0.dat.data[:]) 
         #                            - z_ela)*lapse_rate)
@@ -129,7 +129,7 @@ class Hubbard:
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .1 * min(1, t/150)
+                model.adot.dat.data[mask] = .075 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,
