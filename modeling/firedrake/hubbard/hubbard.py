@@ -75,11 +75,11 @@ class Hubbard:
 
         # Valerie
         mask = np.sqrt((x-xvs)**2 + (y-yvs)**2) < 1
-        model.adot.dat.data[mask] = 0#.1 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0#.05 * min(1, dt/50)
 
         # Hubbard
         mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-        model.adot.dat.data[mask] = 0#.25 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0#.1 * min(1, dt/50)
 
         #model.adot.dat.data[:] = (((model.B.dat.data[:] + model.H0.dat.data[:]) 
         #                            - z_ela)*lapse_rate)
