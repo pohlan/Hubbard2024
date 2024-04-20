@@ -37,7 +37,7 @@ class Hubbard:
                   'theta': 1.0,
                   'thklim': 1e-3,
                   'alpha': 1000.0,
-                  'z_sea': 0,
+                  'z_sea': -5,
                   'calve': True,
                   'ssa': False}
           
@@ -51,7 +51,7 @@ class Hubbard:
                 H_in = afile.load_function(mesh, "H0", idx=399)
                 model.H0.assign(H_in)
          
-        model.beta2.interpolate(df.Constant(200.0))
+        model.beta2.interpolate(df.Constant(400.0)) # higher means more friction 
 
         z_ela = 2
 
@@ -75,11 +75,11 @@ class Hubbard:
 
         # Valerie
         mask = np.sqrt((x-xvs)**2 + (y-yvs)**2) < 1
-        model.adot.dat.data[mask] = 0#.2 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0#.1 * min(1, dt/50)
 
         # Hubbard
         mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-        model.adot.dat.data[mask] = 0#.75 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0#.25 * min(1, dt/50)
 
         #model.adot.dat.data[:] = (((model.B.dat.data[:] + model.H0.dat.data[:]) 
         #                            - z_ela)*lapse_rate)
@@ -108,7 +108,7 @@ class Hubbard:
 
         t = 0.0
         t_grow = 300
-        t_end = 1000
+        t_end = 3000
         dt = 10
         max_step = 20.0
 
@@ -129,7 +129,7 @@ class Hubbard:
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .2 * min(1, t/150)
+                model.adot.dat.data[mask] = .1 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,

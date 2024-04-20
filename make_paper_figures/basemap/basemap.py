@@ -14,8 +14,6 @@ def pct_clip(array,pct=[2,98]):
     return clip
 
 with rio.open('Planet_Hubbard.tif') as src:
-
-
     with rio.open(
             'RGB_Temp.tif', 'w+',
             driver='GTiff',
@@ -32,23 +30,14 @@ with rio.open('Planet_Hubbard.tif') as src:
         dst.write(V,2)
         V = pct_clip(src.read(3))
         dst.write(V,3)
+        print(src.width, src.height)
         
 fig,ax=plt.subplots(figsize=(20,16))
+
+window = rio.windows.Window(3000, 3000, 6500, 6500)
 with rio.open("RGB_Temp.tif") as src2:
-    # Define the window to crop
-    window = Window.from_slices(slice(0, src.height), slice(0, src.width),
-                                 ((6.65e6, 6.67e6), (575000, 600000)))
+    data = src2.read(window=window)
+    transform = rio.windows.transform(window, src2.transform)
+    show(data, transform=transform, ax=ax)
 
-    # Read the windowed data
-    data_windowed = src2.read(window=window)
-
-    # Update the transform to reflect the new window
-    transform = src2.window_transform(window)
-
-    show(src2.read(),transform=src2.transform,ax=ax)
-
-
-#transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
-#x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
-#ax.plot(x,y,'r')
 plt.savefig('map.png', bbox_inches='tight')
