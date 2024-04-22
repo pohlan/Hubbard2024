@@ -49,7 +49,6 @@ with rio.open("RGB_Temp.tif") as src2:
 
 ########################
 # add a flowline
-#need to load csv for points
 points = pd.read_csv('centerline_points_100m.csv')
 transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
 x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
@@ -57,15 +56,15 @@ ax.plot(x,y,'r')
 
 ########################
 # add points for velocity plots 
+points = pd.read_csv('centerline_points_3000m.csv')
 
-# pick points along the flow line in QGIS
 # plug in these coordinates to victors velocity datacube
 
-ax.scatter([585000], [6656000], alpha=1, c='blue', s=100)
+ax.scatter(points.X[1], points.Y[1] , alpha=1, c='blue', s=100)
 
-ax.scatter([590000], [6657000], alpha=1, c='orange', s=100)    
+ax.scatter(points.X[3], points.Y[3] , alpha=1, c='orange', s=100)
 
-ax.scatter([593000], [6665000], alpha=1, c='black', s=100)  
+ax.scatter(points.X[5], points.Y[5] , alpha=1, c='black', s=100)
 
 ########################
 # add inset map 
