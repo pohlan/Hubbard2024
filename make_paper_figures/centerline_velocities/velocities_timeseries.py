@@ -1,37 +1,71 @@
-from rasterio.plot import show
 import numpy as np
 import matplotlib.pyplot as plt
-import rasterio as rio
-from rasterio.enums import Resampling
-from pyproj import Transformer
-from rasterio.windows import Window
 import pandas as pd
-from pyproj import Proj, transform
-import geopandas as gpd
-from matplotlib_scalebar.scalebar import ScaleBar
+import xarray
+import scipy
+from tqdm import tqdm
 
 fs = 24 #font size
         
 # Create a larger figure
 fig, ax = plt.subplots(figsize=(16, 16))
 
-########################
-# add a flowline
-points = pd.read_csv('centerline_points_100m.csv')
-transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
-x, y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
-ax.plot(x,y,'r')
 
 ########################
-# coordinates of points for velocity plots 
-points = pd.read_csv('centerline_points_3000m.csv')
+# open dataset
+year = "2018"
+hubv = xarray.open_dataset("hubbard_%s.nc" % year)
 
-#ax.scatter(points.X[1], points.Y[1] , alpha=1, c='blue', s=100)
-#ax.scatter(points.X[3], points.Y[3] , alpha=1, c='orange', s=100)
-#ax.scatter(points.X[5], points.Y[5] , alpha=1, c='black', s=100)
 
+########################
+# load coordinates of points for velocity plots 
+points = pd.read_csv('centerline_points_3000m.csv') # this is in ESPG: 3413 
+
+# load points of interest 
+
+points_x = np.array([points.X[1], points.X[3], points.X[5] ])   # specify your target x coordinate
+points_y = np.array([points.Y[1], points.Y[3], points.Y[5]] ) # specify your target y coordinate
+
+########################
 # plug in these coordinates to victors velocity datacube
 
+ns_in_day = 60*60*24*1e9
+epoch = np.datetime64("%s-01-01" % year)
+t = ((hubv.time[:]-epoch).to_numpy()/ns_in_day).astype(np.float32)
+print(t)
+
+# want a time series for each point 
+time_series = np.zeros((points_x.shape[0], v.shape[0]))
+#print(time_series.shape)
+
+# Fit smooth function to data and identify peaks
+for i in tqdm(range(hubv.speed.shape[1])):
+    for j in range(hubv.speed.shape[2]):
+        v = hubv.speed[:,i,j]
+        
+
+# Calculate the Euclidean distance between each (x, y) coordinate and the target coordinates
+for i in range(len(points_x)):
+    # Convert the target coordinates to the same coordinate system as your velocity data cube
+    target_x_idx = np.abs(v.x.values - points_x[i]).argmin()
+    target_y_idx = np.abs(v.y.values - points_y[i]).argmin()
+
+    # Find the index of the minimum distance
+    distances = np.sqrt((v.x.values - points_x[i])**2 + (v.y.values - points_y[i])**2)
+
+    # Find the index of the minimum distance
+    min_index = np.argmin(distances)
+
+    # Extract the time series closest to the target coordinates
+    time_series[i, :] = v[:, target_y_idx, target_x_idx]
+
+    #print(time_series) 
+    
+    # plot time series at points 
+    ax.plot(t, time_series[i,:]) 
+    plt.show
+
+########################
 
 
 
@@ -45,4 +79,4 @@ font_size = fs  # Change this to the font size you desire
 for text_obj in text_objs:
     text_obj.set_fontsize(font_size)
 
-plt.savefig('map_inset.png')
+plt.savefig('centerline_velocities.png')
