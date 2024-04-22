@@ -57,14 +57,16 @@ ax.plot(x,y,'r')
 ########################
 # add points for velocity plots 
 points = pd.read_csv('centerline_points_3000m.csv')
+transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
+points_X, points_Y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
 
 # plug in these coordinates to victors velocity datacube
 
-ax.scatter(points.X[1], points.Y[1] , alpha=1, c='blue', s=100)
+points_x = np.array([points_X[2], points_X[3], points_X[4], points_X[5], points_X[6] ])   # specify your target x coordinate
+points_y = np.array([points_Y[2], points_Y[3], points_Y[4], points_Y[5], points_Y[6] ]) # specify your target y coordinate
 
-ax.scatter(points.X[3], points.Y[3] , alpha=1, c='orange', s=100)
-
-ax.scatter(points.X[5], points.Y[5] , alpha=1, c='black', s=100)
+for i in range(len(points_x)): 
+    ax.scatter(points_x[i], points_y[i], s=100)
 
 ########################
 # add inset map 
