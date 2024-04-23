@@ -65,6 +65,22 @@ points_X, points_Y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy
 points_x = np.array([points_X[2], points_X[3], points_X[4], points_X[5], points_X[6] ])   # specify your target x coordinate
 points_y = np.array([points_Y[2], points_Y[3], points_Y[4], points_Y[5], points_Y[6] ]) # specify your target y coordinate
 
+
+
+########################
+
+# dense points around ice fall 
+
+#points = pd.read_csv('centerline_points_1000m.csv')
+#transformer = Transformer.from_crs("epsg:3413", "epsg:32607") # UTM 6N
+#points_X, points_Y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy())
+
+#points_x = np.array([points_X[6], points_X[7], points_X[8], points_X[9], points_X[10] ])   # specify your target x coordinate
+#points_y = np.array([points_Y[6], points_Y[7], points_Y[8], points_Y[9], points_Y[10] ]) # specify your target y coordinate
+
+########################
+
+
 for i in range(len(points_x)): 
     ax.scatter(points_x[i], points_y[i], s=100)
 

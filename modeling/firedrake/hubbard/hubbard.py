@@ -37,7 +37,7 @@ class Hubbard:
                   'theta': 1.0,
                   'thklim': 1e-3,
                   'alpha': 1000.0,
-                  'z_sea': -5,
+                  'z_sea': -8,
                   'calve': True,
                   'ssa': False}
           

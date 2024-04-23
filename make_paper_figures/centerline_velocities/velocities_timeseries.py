@@ -23,11 +23,18 @@ hubv = xarray.open_dataset("hubbard_%s.nc" % year)
 points = pd.read_csv('centerline_points_3000m.csv') # this is in ESPG: 3413 
 
 #coordinates of points of interest 
-#points_X = np.array([points.X[2], points.X[4], points.X[6] ])   # specify your target x coordinate
-#points_Y = np.array([points.Y[2], points.Y[4], points.Y[6]] ) # specify your target y coordinate
-
 points_X = np.array([points.X[2], points.X[3], points.X[4], points.X[5], points.X[6] ])   # specify your target x coordinate
 points_Y = np.array([points.Y[2], points.Y[3], points.Y[4], points.Y[5], points.Y[6] ]) # specify your target y coordinate
+
+
+
+# dense points around ice fall 
+
+# load coordinates of points for velocity plots 
+#points = pd.read_csv('centerline_points_1000m.csv') # this is in ESPG: 3413 
+
+#points_X = np.array([points.X[6], points.X[7], points.X[8], points.X[9], points.X[10] ])   # specify your target x coordinate
+#points_Y = np.array([points.Y[6], points.Y[7], points.Y[8], points.Y[9], points.Y[10] ]) # specify your target y coordinate
 
 
 ########################
