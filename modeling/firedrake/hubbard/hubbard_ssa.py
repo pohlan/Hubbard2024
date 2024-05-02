@@ -36,10 +36,10 @@ class Hubbard:
                   'beta_scale': 1000.,
                   'theta': 1.0,
                   'thklim': 1e-3,
-                  'alpha': 5000.0,
+                  'alpha': 1000.0,
                   'z_sea': 0,
                   'calve': True,
-                  'ssa': False}
+                  'ssa': True}
           
         model = self.model = CoupledModel(mesh,**config)
         
@@ -51,7 +51,7 @@ class Hubbard:
                 H_in = afile.load_function(mesh, "H0", idx=399)
                 model.H0.assign(H_in)
          
-        model.beta2.interpolate(df.Constant(200.0)) # higher means more friction? 
+        model.beta2.interpolate(df.Constant(10.0)) # higher means more friction 
 
         z_ela = 2
 
@@ -125,11 +125,11 @@ class Hubbard:
 
                 # Valerie
                 mask = np.sqrt((x-xvs)**2 + (y-yvs)**2) < 1
-                model.adot.dat.data[mask] = .025 * min(1, t/150)
+                model.adot.dat.data[mask] = .05 * min(1, t/150)
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .06 * min(1, t/150)
+                model.adot.dat.data[mask] = .075 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,
