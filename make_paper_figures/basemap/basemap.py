@@ -62,9 +62,8 @@ points_X, points_Y = transformer.transform(points.X.to_numpy(),points.Y.to_numpy
 
 # plug in these coordinates to victors velocity datacube
 
-points_x = np.array([points_X[2], points_X[3], points_X[4], points_X[5], points_X[6] ])   # specify your target x coordinate
-points_y = np.array([points_Y[2], points_Y[3], points_Y[4], points_Y[5], points_Y[6] ]) # specify your target y coordinate
-
+points_x = np.array([points_X[1], points_X[2], points_X[3], points_X[4], points_X[5], points_X[6] ])   # specify your target x coordinate
+points_y = np.array([points_Y[1], points_Y[2], points_Y[3], points_Y[4], points_Y[5], points_Y[6] ]) # specify your target y coordinate
 
 
 ########################

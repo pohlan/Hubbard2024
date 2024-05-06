@@ -29,7 +29,7 @@ class Hubbard:
 
         config = {'solver_type': 'gmres',
                   'velocity_function_space':'MTW',
-                  'sliding_law': 'Budd',
+                  'sliding_law': 'varying_N',
                   'vel_scale': 100.,
                   'thk_scale': 1000.,
                   'len_scale': 1000.,
@@ -37,7 +37,7 @@ class Hubbard:
                   'theta': 1.0,
                   'thklim': 1e-3,
                   'alpha': 5000.0,
-                  'z_sea': 0,
+                  'z_sea': -0.4,
                   'calve': True,
                   'ssa': False}
           
@@ -53,7 +53,7 @@ class Hubbard:
          
         model.beta2.interpolate(df.Constant(200.0)) # higher means more friction? 
 
-        z_ela = 2
+        z_ela =  1.5 # not used currently 
 
         if conservation_test:
             lapse_rate=0.0
@@ -75,11 +75,11 @@ class Hubbard:
 
         # Valerie
         mask = np.sqrt((x-xvs)**2 + (y-yvs)**2) < 1
-        model.adot.dat.data[mask] = 0#.025 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0 
 
         # Hubbard
         mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-        model.adot.dat.data[mask] = 0#.06 * min(1, dt/50)
+        model.adot.dat.data[mask] = 0 
 
         #model.adot.dat.data[:] = (((model.B.dat.data[:] + model.H0.dat.data[:]) 
         #                            - z_ela)*lapse_rate)
@@ -125,11 +125,11 @@ class Hubbard:
 
                 # Valerie
                 mask = np.sqrt((x-xvs)**2 + (y-yvs)**2) < 1
-                model.adot.dat.data[mask] = .025 * min(1, t/150)
+                model.adot.dat.data[mask] = .03 * min(1, t/150)
 
                 # Hubbard
                 mask = np.sqrt((x-xhs)**2 + (y-yhs)**2) < 2
-                model.adot.dat.data[mask] = .06 * min(1, t/150)
+                model.adot.dat.data[mask] = .09 * min(1, t/150)
 
                 converged = model.step(t,
                                        dt,
