@@ -50,7 +50,6 @@ vx = np.zeros((points_X.shape[0], hubv.vx.shape[0]))
 vy = np.zeros((points_X.shape[0], hubv.vx.shape[0]))
 v = np.zeros((points_X.shape[0], hubv.vx.shape[0]))
 
-
 for i in range(len(points_X)):
     # get indices of coordinates closest to points of interest
     target_x_idx = np.abs(hubv.x.values - points_X[i]).argmin()

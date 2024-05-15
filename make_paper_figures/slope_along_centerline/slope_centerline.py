@@ -14,6 +14,7 @@ import imageio.v2 as imageio
 from matplotlib.colors import BoundaryNorm
 import geopandas as gpd
 from pyproj import Transformer
+import matplotlib.colors as mcolors
 
 ########################
 
@@ -75,6 +76,58 @@ x, y =points.X.to_numpy(), points.Y.to_numpy()
 d = np.linspace(100*len(x), 0, len(x))
 
 print('finished loading centerlines')
+
+
+
+########################
+
+ds = xarray.load_dataset("../Hubbard_5eminus5.nc")
+ds["v"] = np.sqrt(ds.vx**2 + ds.vy**2).fillna(0)
+ds["month"] = ds.time.dt.month
+ds["year"] = ds.time.dt.year
+ds["doy"] = ds.time.dt.dayofyear
+
+for i in range(len(points_X)):
+    # get indices of coordinates closest to points of interest
+    target_x_idx = np.abs(hubv.x.values - points_X[i]).argmin()
+    target_y_idx = np.abs(hubv.y.values - points_Y[i]).argmin()
+    
+    # Extract the time series closest to the target coordinates
+    vx[i, :] = hubv.vx[:, target_y_idx, target_x_idx]
+    vy[i, :] = hubv.vy[:, target_y_idx, target_x_idx]
+    v[i] = np.sqrt(vx[i]**2 + vy[i]**2)
+
+
+for i, year in enumerate([2018]):
+
+    winter_mask = np.logical_or(
+        np.logical_and(ds.month >= 11, ds.year == year),
+        np.logical_and(ds.month <= 2, ds.year == year+1)
+    )
+    
+    winter_velocities = ds.v[winter_mask, :, :]
+    winter_peak = winter_velocities.max(dim='time')
+
+    middle_mask = np.logical_and(
+        np.logical_and(ds.month >= 2.05, ds.month <= 4),
+        ds.year == year+1,
+    )
+    middle_velocities = ds.v[middle_mask, :, :]
+    min = middle_velocities.min(dim='time')
+
+    summer_mask = np.logical_and(
+        np.logical_and(ds.month >= 4, ds.month <= 6),
+        ds.year == year+1,
+    )
+    summer_velocities = ds.v[summer_mask, :, :]
+    summer_peak = summer_velocities.max(dim='time')
+
+    ###### calculate strength of double peaks 
+    
+    mask = (winter_peak < min) | (summer_peak < 500)
+    
+    strength = (winter_peak - min)
+    strength = np.where(mask, 0, strength)
  
 ########################
 # get slope along centerline
@@ -82,6 +135,8 @@ print('finished loading centerlines')
 #initialize arrays
 slope_centerline = np.zeros((len(x)))
 dem_centerline = np.zeros((len(x)))
+strength_centerline = np.zeros((len(x)))
+
 
 # find indices along centerline 
 for i in range(len(x)):
@@ -92,6 +147,7 @@ for i in range(len(x)):
      # Extract the slope value closest to the target coordinates
     slope_centerline[i] = slope[target_y_idx[0], target_x_idx[0]]
     dem_centerline[i] = data[target_y_idx[0], target_x_idx[0]]
+    strength_centerline[i] = strength[target_y_idx[0], target_x_idx[0]]
 
 # Combine target_x_idx, target_y_idx, and slope into a DataFrame
 df = pd.DataFrame({'x': x, 'y': y, 'slope': slope_centerline})
@@ -101,6 +157,10 @@ df.to_csv('slope_along_centerline.csv')
 
 print('finished calculating slope along centerline')
 
+
+########################
+
+ 
 ########################
 
 ax.plot(d, slope_centerline)
@@ -123,6 +183,8 @@ for text_obj in text_objs:
     text_obj.set_fontsize(font_size)
 
 plt.savefig('slope_centerline.png')
+
+
 
 ax.plot(d, dem_centerline)
 
