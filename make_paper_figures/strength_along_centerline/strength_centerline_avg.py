@@ -18,13 +18,6 @@ import matplotlib.colors as mcolors
 
 ########################
 
-fs = 24 #font size
-        
-# Create a larger figure
-fig, ax = plt.subplots(figsize=(16, 16))
-
-########################
-
 # load DEM
     
 # Open the GeoTIFF file
@@ -76,7 +69,33 @@ x, y =points.X.to_numpy(), points.Y.to_numpy()
 d = np.linspace(100*len(x), 0, len(x))
 
 print('finished loading centerlines')
+ 
+########################
+# get slope along centerline
 
+#initialize arrays
+slope_centerline = np.zeros((len(x)))
+dem_centerline = np.zeros((len(x)))
+
+
+# find indices along centerline 
+for i in range(len(x)):
+    # get indices of coordinates closest to points of interest
+    target_x_idx = np.abs(x_coords[:, :] - x[i]).argmin(axis = 1)
+    target_y_idx= np.abs(y_coords[:, :] - y[i]).argmin(axis = 0)
+    
+     # Extract the slope value closest to the target coordinates
+    slope_centerline[i] = slope[target_y_idx[0], target_x_idx[0]]
+    dem_centerline[i] = data[target_y_idx[0], target_x_idx[0]]
+
+# Combine target_x_idx, target_y_idx, and slope into a DataFrame
+df1 = pd.DataFrame({'x': x, 'y': y, 'slope': slope_centerline})
+df2 = pd.DataFrame({'x': x, 'y': y, 'dem': dem_centerline})
+# Write the DataFrame to a CSV file
+df1.to_csv('slope_along_centerline.csv')
+df2.to_csv('dem_along_centerline.csv')
+
+print('finished calculating slope along centerline')
 
 
 ########################
@@ -86,19 +105,13 @@ ds["v"] = np.sqrt(ds.vx**2 + ds.vy**2).fillna(0)
 ds["month"] = ds.time.dt.month
 ds["year"] = ds.time.dt.year
 ds["doy"] = ds.time.dt.dayofyear
+xx, yy = np.meshgrid(ds.x, ds.y)
 
-for i in range(len(points_X)):
-    # get indices of coordinates closest to points of interest
-    target_x_idx = np.abs(hubv.x.values - points_X[i]).argmin()
-    target_y_idx = np.abs(hubv.y.values - points_Y[i]).argmin()
-    
-    # Extract the time series closest to the target coordinates
-    vx[i, :] = hubv.vx[:, target_y_idx, target_x_idx]
-    vy[i, :] = hubv.vy[:, target_y_idx, target_x_idx]
-    v[i] = np.sqrt(vx[i]**2 + vy[i]**2)
+years = [2018, 2019, 2020, 2021]
 
+strength_total = None
 
-for i, year in enumerate([2018]):
+for i, year in enumerate(years):
 
     winter_mask = np.logical_or(
         np.logical_and(ds.month >= 11, ds.year == year),
@@ -127,82 +140,51 @@ for i, year in enumerate([2018]):
     mask = (winter_peak < min) | (summer_peak < 500)
     
     strength = (winter_peak - min)
-    strength = np.where(mask, 0, strength)
- 
+    #strength = np.where(mask, 0, strength)
+    
+    if strength_total is None:
+        strength_total = strength
+    else:
+        strength_total += strength
+
+# Average strength over the number of years
+strength_avg = strength_total / len(years)
+
 ########################
-# get slope along centerline
+# get strength along centerline
 
 #initialize arrays
-slope_centerline = np.zeros((len(x)))
-dem_centerline = np.zeros((len(x)))
 strength_centerline = np.zeros((len(x)))
-
 
 # find indices along centerline 
 for i in range(len(x)):
     # get indices of coordinates closest to points of interest
-    target_x_idx = np.abs(x_coords[:, :] - x[i]).argmin(axis = 1)
-    target_y_idx= np.abs(y_coords[:, :] - y[i]).argmin(axis = 0)
+    target_x_idx = np.abs(xx[:, :] - x[i]).argmin(axis = 1)
+    target_y_idx= np.abs(yy[:, :] - y[i]).argmin(axis = 0)
     
      # Extract the slope value closest to the target coordinates
-    slope_centerline[i] = slope[target_y_idx[0], target_x_idx[0]]
-    dem_centerline[i] = data[target_y_idx[0], target_x_idx[0]]
-    strength_centerline[i] = strength[target_y_idx[0], target_x_idx[0]]
-
-# Combine target_x_idx, target_y_idx, and slope into a DataFrame
-df = pd.DataFrame({'x': x, 'y': y, 'slope': slope_centerline})
-
-# Write the DataFrame to a CSV file
-df.to_csv('slope_along_centerline.csv')
-
-print('finished calculating slope along centerline')
-
-
-########################
-
+    strength_centerline[i] = strength_avg[target_y_idx[0], target_x_idx[0]]
  
 ########################
+# make figures 
 
-ax.plot(d, slope_centerline)
+fs = 24 #font size
 
-# Set x-axis label
-ax.set_xlabel('Distance from terminus', fontsize=fs)
+fig, ax3 = plt.subplots(figsize=(16, 16))
 
-# Set y-axis label
-ax.set_ylabel('Slope [deg]', fontsize=fs)
-
-# Set font size for tick labels
-ax.tick_params(axis='both', which='major', labelsize=fs)
-
-# Get all text objects in the figure
+# Plot the first dataset
+ax3.plot(d, strength_centerline, 'b-')
+ax3.set_xlabel('Distance from terminus', fontsize=fs)
+ax3.set_ylabel('Strength of winter peak', fontsize=fs, color='b')
+ax3.tick_params(axis='y', labelcolor='b', which='major', labelsize=fs)
+ax3.tick_params(axis='x', which='major', labelsize=fs)
+#second y-axis
+ax4 = ax3.twinx()
+ax4.plot(d, dem_centerline, 'r-')
+ax4.set_ylabel('Elevation [m]', fontsize=fs, color='r')
+ax4.tick_params(axis='y', labelcolor='r', which='major', labelsize=fs)
 text_objs = plt.gcf().findobj(plt.Text)
-
-# Change font size for all text objects
-font_size = fs  # Change this to the font size you desire
 for text_obj in text_objs:
-    text_obj.set_fontsize(font_size)
-
-plt.savefig('slope_centerline.png')
-
-
-
-ax.plot(d, dem_centerline)
-
-# Set x-axis label
-ax.set_xlabel('Distance from terminus', fontsize=fs)
-
-# Set y-axis label
-ax.set_ylabel('Elevation [m]', fontsize=fs)
-
-# Set font size for tick labels
-ax.tick_params(axis='both', which='major', labelsize=fs)
-
-# Get all text objects in the figure
-text_objs = plt.gcf().findobj(plt.Text)
-
-# Change font size for all text objects
-font_size = fs  # Change this to the font size you desire
-for text_obj in text_objs:
-    text_obj.set_fontsize(font_size)
-
-plt.savefig('dem_centerline.png')
+    text_obj.set_fontsize(fs)
+plt.title('Average from 2018-2021', fontsize=fs)
+plt.savefig('avg2018-2021_strength_dem.png')
