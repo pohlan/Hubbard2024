@@ -45,7 +45,6 @@ t = ((hubv.time[:] - epoch).to_numpy() / ns_in_day).astype(np.float32)
 # Convert time values to datetime objects
 datetime_index = pd.to_datetime(hubv.time.values)
 
-
 # time series for each point
 vx = np.zeros((points_X.shape[0], hubv.vx.shape[0]))
 vy = np.zeros((points_X.shape[0], hubv.vx.shape[0]))
