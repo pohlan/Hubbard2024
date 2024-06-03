@@ -9,7 +9,7 @@ include "../parameters/Physical_Parameters.IN"
 include "../DEMs/mesh_parameters.IN"
 
 Header
-  Mesh DB "." "hubbard_ice_mesh"
+  Mesh DB "." "hubbard_mesh"
   Results Directory "../results"
 End
 

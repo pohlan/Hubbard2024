@@ -22,8 +22,6 @@ from scipy.integrate import cumulative_trapezoid
 g = 9.81
 rhoi = 917
 rhow = 1000
-
-# calculate resulting flow force from velocity cube
 A = 24e-25  # (PoG table)
 ng = 3  # glens exponent
 
@@ -39,9 +37,8 @@ y = y[::-1]
 
 # distance from terminus along centerline
 d = np.linspace(0, 100 * len(x), len(x))
-
 # spatial resolution of about 1000m (2xice average thickness)
-l = np.linspace(0, 100 * len(d), 20)
+l = np.linspace(0, 100 * len(d), 15)
 l_bar = np.repeat(l, 2)
 
 print("finished loading centerlines")
@@ -75,21 +72,29 @@ with rio.open("../data/hubbard_bedrock_icebridge_reproj.tif") as src:
 
 n = 5
 beddem_centerline = np.convolve(np.ones(n) / n, beddem_centerline, mode="same")
+# beddem_centerline[25:75] = beddem_centerline[25:75] - 300
+
 beddem_centerline[0:5] = beddem_centerline[6]
 beddem_centerline[-5:] = beddem_centerline[-6]
 
-surfdem_centerline = np.convolve(np.ones(n) / n, surfdem_centerline, mode="same")
-surfdem_centerline[0:5] = surfdem_centerline[6]
-surfdem_centerline[-5:] = surfdem_centerline[-6]
+# surfdem_centerline = np.convolve(np.ones(n) / n, surfdem_centerline, mode="same")
+# surfdem_centerline[0:5] = surfdem_centerline[6]
+# surfdem_centerline[-5:] = surfdem_centerline[-6]
+
+# beddem_centerline[25:75] = beddem_centerline[25:75] - 300
 
 H = surfdem_centerline - beddem_centerline
+
 dhdx = np.gradient(surfdem_centerline, d)
+# dhdx = np.average(dhdx)
 h = surfdem_centerline
 
 # calculate force acting on terminus
 Hf = H[0]
 hf = h[0]
-Ff = g * rhoi / 2 * ((1 - rhow / rhoi) * Hf**2 + rhow / rhoi * hf * (2 * Hf - hf))
+# print(Hf, hf)
+# Ff = g * rhoi / 2 * ((1 - rhow / rhoi) * Hf**2 + rhow / rhoi * hf * (2 * Hf - hf))
+Ff = g * rhoi / 2 * Hf**2 - g * rhow / 2 * (Hf - hf) ** 2
 
 print("finished calculating thickness along centerline")
 
@@ -181,7 +186,7 @@ for j, m in enumerate(slices):
 
     print("Velocity on", date)
 
-    epsilon0 = dvdx / 2
+    epsilon0 = dvdx
     eta = (2 * A * ((epsilon0 / A) ** ((ng - 1) / ng))) ** (-1)
 
     # driving force
@@ -192,7 +197,7 @@ for j, m in enumerate(slices):
     net_f = 4 * H * dvdx * eta
 
     # cumulative restisting force
-    Rf = Fd - net_f
+    Rf = net_f - Fd
 
     # calculate average resisting force
     Rf_avg = np.zeros(len(l))
