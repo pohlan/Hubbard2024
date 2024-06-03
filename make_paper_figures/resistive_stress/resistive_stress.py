@@ -61,6 +61,7 @@ print("finished calculating dem and slope along centerline")
 # load DEM
 
 with rio.open("../data/hubbard_bedrock_icebridge_reproj.tif") as src:
+    # with rio.open("../data/hubbard_bed_reproj.tif") as src:
     # Convert centerline coordinates to pixel indices
     i, j = rio.transform.rowcol(src.transform, x, y)
 
@@ -70,9 +71,16 @@ with rio.open("../data/hubbard_bedrock_icebridge_reproj.tif") as src:
     beddem_centerline = data[i, j]
 
 
+# beddem_centerline[20:50] = (
+#     (beddem_centerline[20] - beddem_centerline[50])
+#     / (d[20] - d[50])
+#     * (d[20:50] - d[20])
+#     + beddem_centerline[20]
+#     - 200
+# )
+
 n = 5
 beddem_centerline = np.convolve(np.ones(n) / n, beddem_centerline, mode="same")
-# beddem_centerline[25:75] = beddem_centerline[25:75] - 300
 
 beddem_centerline[0:5] = beddem_centerline[6]
 beddem_centerline[-5:] = beddem_centerline[-6]
