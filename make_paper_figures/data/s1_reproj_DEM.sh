@@ -14,3 +14,10 @@ if test -f "hubbard_bedrock_icebridge_reproj.tif"; then
 fi
 
 gdalwarp -t_srs EPSG:3413 hubbard_bedrock_icebridge.tif hubbard_bedrock_icebridge_reproj.tif
+
+
+# if test -f "hubbard_bedrock_icebridge_reproj.tif"; then
+#     rm Hubbard_ifSAR_Bathy_Millan_Icebridge_reproj.tif
+# fi
+
+# gdalwarp -t_srs EPSG:3413 Hubbard_ifSAR_Bathy_Millan_Icebridge.tiff Hubbard_ifSAR_Bathy_Millan_Icebridge_reproj.tif
