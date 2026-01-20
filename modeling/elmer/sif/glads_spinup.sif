@@ -40,7 +40,7 @@ Simulation
 
   Timestepping Method = "bdf"
   BDF Order = 1
-  TimeStep intervals = 200 ! 10 days 
+  TimeStep intervals = 365*0.05 ! 1 year
   Timestep Sizes = Real #dt
   Output Intervals = 1 
 

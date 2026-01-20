@@ -15,7 +15,7 @@
 #Q2 = 115.0e3
 
 #ng = 3.0
-#Aglen = 6.8e-24*yearinsec*MPainPa^3   
+#Aglen = 2.4e-24*yearinsec*MPainPa^3   
 #eta = (2.0*Aglen/10.0)^(-1.0/ng)
 
 ! For the sheet
@@ -23,9 +23,9 @@
 #alphas = 3.0 
 #betas = 2.0 
 #ev = 1.0e-4
-#lr = 5.0 
-#hr = 0.5 
-#Ks = (2.0/(1000.0*9.80))*yearinsec*(1.0/MPainPa)^(1.0-betas)
+#lr = 20.0 
+#hr = 1
+#Ks = 0.001*yearinsec*(1.0/MPainPa)^(1.0-betas)
 #Hs = 0.05 ! IC for h
 
 ! For the Channels
@@ -33,7 +33,7 @@
 #betac = 1.5 
 #Kc = 0.5*yearinsec*(1.0/MPainPa)^(1.0-betac) 
 #Ac = Aglen*2.0/ng^ng ! Ian 
-#lc = 20.0 
+#lc = 10.0 
 #Ct = 7.5e-8*MPainPa              
 #Cw = 4220.0*yearinsec^2 
 #Lw = 335000.0*yearinsec^2
