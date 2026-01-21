@@ -10,15 +10,15 @@ import os
 import shutil
 
 site_data = []
-with open("May2025_fieldsites.csv", newline='',encoding='utf-8-sig') as csvfile:
+with open("points_across_glacier.csv", newline='',encoding='utf-8-sig') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        if row['Lat'] and row['Lon']:  # Only add rows with both values present
+        if row['lat'] and row['lon']:  # Only add rows with both values present
             site_data.append(row)
 
-lats = [float(row['Lat']) for row in site_data if row['Site'] != "ISUA"]
-lons = [float(row['Lon']) for row in site_data if row['Site'] != "ISUA"]
-sites = [row['Site'] for row in site_data if row['Site'] != "ISUA"]
+lats = [float(row['lat']) for row in site_data]
+lons = [float(row['lon']) for row in site_data]
+sites = [row['Site'] for row in site_data]
 
 def reduce_cube(ds):
     # Filter by start date
