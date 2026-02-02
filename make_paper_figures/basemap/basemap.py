@@ -8,7 +8,8 @@ from rasterio.windows import Window
 import pandas as pd
 from pyproj import Proj, transform
 import geopandas as gpd
-from matplotlib_scalebar.scalebar import ScaleBar
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 fs = 24  # font size
 
@@ -53,97 +54,20 @@ with rio.open("RGB_Temp.tif") as src2:
 
 
 ########################
-# add a flowline
-points = pd.read_csv("centerline_points_100m.csv")
-transformer = Transformer.from_crs("epsg:3413", "epsg:32607")  # UTM 6N
-x, y = transformer.transform(points.X.to_numpy(), points.Y.to_numpy())
-ax.plot(x, y, "r")
 
-########################
-# add points for velocity plots
-points = pd.read_csv("centerline_points_3000m.csv")
-transformer = Transformer.from_crs("epsg:3413", "epsg:32607")  # UTM 6N
-points_X, points_Y = transformer.transform(points.X.to_numpy(), points.Y.to_numpy())
+sites = np.arange(1, 21, 1)
 
-# plug in these coordinates to victors velocity datacube
+# Use a colormap to assign unique colors
+cmap = cm.get_cmap("tab20", len(sites))
 
-# points_x = np.array([points_X[1], points_X[5]])  # specify your target x coordinate
-# points_y = np.array([points_Y[1], points_Y[5]])  # specify your target y coordinate
+for idx, site in enumerate(sites):
+    points = pd.read_csv(f"flowline_{site}.csv")
+    transformer = Transformer.from_crs("epsg:3413", "epsg:32607")  # UTM 6N
+    points_X, points_Y = transformer.transform(points.x.to_numpy(), points.y.to_numpy())
+    color = cmap(idx)
+    ax.plot(points_X, points_Y, label=f"Flowline {site}", color=color)
 
-
-########################
-
-# dense points around ice fall
-
-points = pd.read_csv("centerline_points_1000m.csv")
-transformer = Transformer.from_crs("epsg:3413", "epsg:32607")  # UTM 6N
-points_X, points_Y = transformer.transform(points.X.to_numpy(), points.Y.to_numpy())
-
-points_x = np.array([points_X[13], points_X[7]])  # specify your target x coordinate
-points_y = np.array([points_Y[13], points_Y[7]])  # specify your target y coordinate
-
-########################
-
-
-for i in range(len(points_x)):
-    ax.scatter(points_x[i], points_y[i], s=100)
-
-########################
-# add inset map
-
-# Read the CSV file into a DataFrame
-df = gpd.read_file("Alaska_outline_cropped.shp")
-df = df.to_crs(epsg=32607)
-
-# Add a subplot with a black background
-ax_map = fig.add_axes([0.15, 0.675, 0.2, 0.2], facecolor="white")
-
-# Plot the shapefile on the map subplot
-df.plot(ax=ax_map, color="black")
-ax_map.scatter([590839], [6657969], alpha=1, c="red", s=100)
-# ax_map.axis('off')
-# Turn off the ticks and axis labels
-ax_map.tick_params(
-    axis="both", which="both", bottom=False, top=False, left=False, right=False
-)
-ax_map.set_xticks([])
-ax_map.set_yticks([])
-
-########################
-# Add a scale bar to the plot
-scalebar = ScaleBar(
-    1, location="lower left", font_properties={"size": fs}
-)  # , frameon=False, font_properties={'family': 'serif', 'size': fs})
-ax.add_artist(scalebar)
-
-########################
-# Add a north arrow
-arrow_x = 595750  # x-coordinate of the arrow
-arrow_y = 6669000  # y-coordinate of the arrow
-arrow_length = 900  # Length of the arrow
-arrow_props = dict(
-    facecolor="black", arrowstyle="-|>", linewidth=4, mutation_scale=30
-)  # Arrow properties
-
-# Add the arrow to the plot
-ax.annotate(
-    "",
-    xy=(arrow_x, arrow_y),
-    xytext=(arrow_x, arrow_y - arrow_length),
-    arrowprops=arrow_props,
-)
-
-
-# Add a label for the north arrow
-ax.text(
-    arrow_x + 300,
-    arrow_y - 600,
-    "N",
-    ha="left",
-    va="center",
-    fontsize=fs,
-    color="black",
-)
+ax.legend()
 
 # Get all text objects in the figure
 text_objs = plt.gcf().findobj(plt.Text)
@@ -153,4 +77,4 @@ font_size = fs  # Change this to the font size you desire
 for text_obj in text_objs:
     text_obj.set_fontsize(font_size)
 
-plt.savefig("map_inset.png")
+plt.savefig("map_with_flowlines.png")

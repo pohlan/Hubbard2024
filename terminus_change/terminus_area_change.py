@@ -71,7 +71,7 @@ list_small_polygons = []
 # Cryohackathon terminus lines
 for (day, terminus_line) in zip(df_terminus.Date, df_terminus.geometry):
     newrow = {}
-    newrow["Date"] = dt.datetime.strptime(day, "%Y-%m-%d").date()
+    newrow["Date"] = day.date()
     append_positions_by_section(newrow, terminus_line, list_small_polygons)
     list_areas.append(newrow)
 # save polygons with glacier part of sections
