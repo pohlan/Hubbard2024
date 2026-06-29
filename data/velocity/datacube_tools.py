@@ -275,6 +275,7 @@ class DATACUBETOOLS:
         # for zarr store modify URL for use in boto open - change http: to s3: and lose s3.amazonaws.com
         incubeurl = (
             cube_feature["properties"]["zarr_url"]
+            .replace("https:", "s3:")
             .replace("http:", "s3:")
             .replace(".s3.amazonaws.com", "")
         )
@@ -353,6 +354,7 @@ class DATACUBETOOLS:
         # for zarr store modify URL for use in boto open - change http: to s3: and lose s3.amazonaws.com
         incubeurl = (
             cube_feature["properties"]["zarr_url"]
+            .replace("https:", "s3:")
             .replace("http:", "s3:")
             .replace(".s3.amazonaws.com", "")
         )
@@ -435,6 +437,7 @@ class DATACUBETOOLS:
         # for zarr store modify URL for use in boto open - change http: to s3: and lose s3.amazonaws.com
         incubeurl = (
             cube_feature["properties"]["zarr_url"]
+            .replace("https:", "s3:")
             .replace("http:", "s3:")
             .replace(".s3.amazonaws.com", "")
         )
