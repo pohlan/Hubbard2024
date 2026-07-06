@@ -4,9 +4,13 @@ import datetime as dt
 import pandas as pd
 import xarray
 from shapely import Point
+from pathlib import Path
 
-terminus_data_path = "/home/annegret/Projects/Hubbard2024/data/terminus_data/"        # folder where all the data for terminus position and terminus sections is stored
-veloc_data_path    = "/home/annegret/Projects/Hubbard2024/data/velocity/"
+# Define data paths relative to this script's location
+script_dir = Path(__file__).resolve().parent
+project_root = script_dir.parent
+terminus_data_path = project_root / "data" / "terminus_data" / ""  # folder where all the data for terminus position and terminus sections is stored
+veloc_data_path = project_root / "data" / "velocity" / ""
 
 def get_along_vector(geom):
     # poly = list(geom.geoms)  # make Polygons out of MultiPolygon to be able to extract coordinates
@@ -17,9 +21,9 @@ def get_along_vector(geom):
     return along_vector
 
 # load sections, terminus positions and velocity data
-geodf_sections = gpd.read_file(terminus_data_path+"section_polygons_glacier_only.gpkg")
-xds_veloc      = xarray.open_dataset(veloc_data_path+"velocity_Radar_2026.nc")
-df_terminus    = pd.read_csv("data/terminus_data/terminus_position_smooth.csv")
+geodf_sections = gpd.read_file(str(terminus_data_path / "section_polygons_glacier_only.gpkg"))
+xds_veloc      = xarray.open_dataset(str(veloc_data_path / "velocity_Radar_2026.nc"))
+df_terminus    = pd.read_csv(str(terminus_data_path / "terminus_position_smooth.csv"))
 # move terminus sections to same coordinates as velocity (the other way round is not as straightforward since vx and vy also depend on that)
 geodf_sections.to_crs(xds_veloc.projection, inplace=True)
 
@@ -70,8 +74,8 @@ for (i,(sec,geom)) in enumerate(zip(geodf_sections.section, geodf_sections.geome
     abl = vel_flux[1:-1] - dL_dt
     df_abl[sec+" frontal ablation [m/yr]"] = abl
 
-df_vel.to_csv(veloc_data_path+"velocity_by_section.csv", index=False)
-df_advance.to_csv(terminus_data_path+"advance_by_section.csv", index=False)
-df_dLdt.to_csv(terminus_data_path+"advance_rate_by_section.csv", index=False)
-df_abl.to_csv(terminus_data_path+"frontal_ablation.csv", index=False)
-df_vel_ortho.to_csv(veloc_data_path+"velocity_ortho_by_section.csv", index=False)
+df_vel.to_csv(str(veloc_data_path / "velocity_by_section.csv"), index=False)
+df_advance.to_csv(str(terminus_data_path / "advance_by_section.csv"), index=False)
+df_dLdt.to_csv(str(terminus_data_path / "advance_rate_by_section.csv"), index=False)
+df_abl.to_csv(str(terminus_data_path / "frontal_ablation.csv"), index=False)
+df_vel_ortho.to_csv(str(veloc_data_path / "velocity_ortho_by_section.csv"), index=False)
