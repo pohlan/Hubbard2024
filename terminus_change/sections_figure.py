@@ -5,24 +5,27 @@ import geopandas as gpd
 import rasterio
 import matplotlib.pyplot as plt
 from rasterio.plot import show
+from pathlib import Path
 
-
-terminus_data_path = "/home/annegret/Projects/Hubbard2024/data/terminus_data/"        # folder where all the data for terminus position and terminus sections is stored
-veloc_data_path    = "/home/annegret/Projects/Hubbard2024/data/velocity/"
-image_path         = "/home/annegret/Projects/Hubbard2024/data/images/"
-fig_path           = "/home/annegret/Projects/Hubbard2024/terminus_change/figures/"   # folder to save figures
+# define data paths relative to this script's location
+script_dir = Path(__file__).resolve().parent
+project_root = script_dir.parent
+terminus_data_path = project_root / "data" / "terminus_data" / ""      # folder where all the data for terminus position and terminus sections is stored
+veloc_data_path    = project_root / "data" / "velocity" / ""
+image_path         = project_root / "data/images" / ""
+fig_path           = project_root / "terminus_change" / "figures" / "" # folder to save figures
 
 # load sections, terminus positions and velocity data
-df_veloc      = pd.read_csv(veloc_data_path+"velocity_by_section.csv")
-df_veloc_ortho = pd.read_csv(veloc_data_path+"velocity_ortho_by_section.csv")
-df_terminus   = pd.read_csv(terminus_data_path+"advance_by_section.csv")
-df_ablation   = pd.read_csv(terminus_data_path+"frontal_ablation.csv")
-df_retr_rate  = pd.read_csv(terminus_data_path+"advance_rate_by_section.csv")
+df_veloc      = pd.read_csv(veloc_data_path / "velocity_by_section.csv")
+df_veloc_ortho = pd.read_csv(veloc_data_path / "velocity_ortho_by_section.csv")
+df_terminus   = pd.read_csv(terminus_data_path / "advance_by_section.csv")
+df_ablation   = pd.read_csv(terminus_data_path / "frontal_ablation.csv")
+df_retr_rate  = pd.read_csv(terminus_data_path / "advance_rate_by_section.csv")
 df_veloc.Date = pd.to_datetime(df_veloc.Date)
 
 # gpkg of sections to plot map
-gdf_sections = gpd.read_file(terminus_data_path+"terminus_sections_rectangle.gpkg")
-src          = rasterio.open(image_path+"composite.tif")
+gdf_sections = gpd.read_file(terminus_data_path / "terminus_sections_rectangle.gpkg")
+src          = rasterio.open(image_path / "composite.tif")
 
 # loop through sections, plot and save velocity time series
 fig1, ax1 = plt.subplots(5,1, layout='constrained', figsize=(9,9))
@@ -59,9 +62,9 @@ for (sterm, sveloc, sretr, sabl) in zip(df_terminus, df_veloc, df_retr_rate, df_
 
     i+=1
 
-fig1.savefig(fig_path+"veloc_vs_terminus_advance.pdf")
-fig2.savefig(fig_path+"veloc_vs_terminus_advance_rate.pdf")
-fig3.savefig(fig_path+"veloc_vs_frontal_ablation.pdf")
+fig1.savefig(fig_path / "veloc_vs_terminus_advance.pdf")
+fig2.savefig(fig_path / "veloc_vs_terminus_advance_rate.pdf")
+fig3.savefig(fig_path / "veloc_vs_frontal_ablation.pdf")
 
 
 
@@ -103,4 +106,4 @@ ax.axis('off')
 ax.set_xlim(5.79e5, 5.9e5)
 ax.set_ylim(6.649e6, 6.659e6)
 
-plt.savefig(fig_path+"section_map.pdf")
+plt.savefig(fig_path / "section_map.pdf")

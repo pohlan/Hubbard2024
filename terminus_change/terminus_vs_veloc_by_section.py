@@ -6,7 +6,7 @@ import xarray
 from shapely import Point
 from pathlib import Path
 
-# Define data paths relative to this script's location
+# define data paths relative to this script's location
 script_dir = Path(__file__).resolve().parent
 project_root = script_dir.parent
 terminus_data_path = project_root / "data" / "terminus_data" / ""  # folder where all the data for terminus position and terminus sections is stored
@@ -39,7 +39,9 @@ t_term     = [dt.datetime.strptime(d, "%Y-%m-%d").date() for d in df_terminus["D
 df_vel     = pd.DataFrame({"Date":t_term})
 df_vel_ortho = pd.DataFrame({"Date":t_term})
 df_advance = pd.DataFrame({"Date":t_term})
+df_retreat = pd.DataFrame({"Date":t_term})
 df_dLdt    = pd.DataFrame({"Date":t_term[1:-1]})
+df_retreat_rate = pd.DataFrame({"Date":t_term[1:-1]})
 df_abl     = pd.DataFrame({"Date":t_term[1:-1]})
 for (i,(sec,geom)) in enumerate(zip(geodf_sections.section, geodf_sections.geometry.values)):
     # get median velocity in the section
@@ -62,13 +64,14 @@ for (i,(sec,geom)) in enumerate(zip(geodf_sections.section, geodf_sections.geome
     # terminus advance position
     advance = df_terminus[sec+" [m]"]-np.min(df_terminus[sec+" [m]"])
     df_advance[sec+" advance position [m]"] = advance
+    df_retreat[sec+" retreat position [m]"] = np.max(df_terminus[sec+" [m]"]) - df_terminus[sec+" [m]"]
 
     # time derivative of advanced position -> advance rate in m/yr
     dts = np.diff(t_term)  # time interval of data
     assert all(dts == dts[0])
     dL_dt = 0.5*(np.diff(advance[0:-1]) + np.diff(advance[1:])) *365/dts[0].days
-    # dL_dt = 0.5*(np.diff(df_terminus[sec+" [m]"][0:-1]) + np.diff(df_terminus[sec+" [m]"][1:])) *365/5 # derivative of advance position
     df_dLdt[sec+" advance rate [m/yr]"] = dL_dt
+    df_retreat_rate[sec+" retreat rate [m/yr]"] = -dL_dt
 
     # abl = v_median[1:-1] + dL_dt
     abl = vel_flux[1:-1] - dL_dt
@@ -76,6 +79,8 @@ for (i,(sec,geom)) in enumerate(zip(geodf_sections.section, geodf_sections.geome
 
 df_vel.to_csv(str(veloc_data_path / "velocity_by_section.csv"), index=False)
 df_advance.to_csv(str(terminus_data_path / "advance_by_section.csv"), index=False)
+df_retreat.to_csv(str(terminus_data_path / "retreat_by_section.csv"), index=False)
 df_dLdt.to_csv(str(terminus_data_path / "advance_rate_by_section.csv"), index=False)
+df_retreat_rate.to_csv(str(terminus_data_path / "retreat_rate_by_section.csv"), index=False)
 df_abl.to_csv(str(terminus_data_path / "frontal_ablation.csv"), index=False)
 df_vel_ortho.to_csv(str(veloc_data_path / "velocity_ortho_by_section.csv"), index=False)
