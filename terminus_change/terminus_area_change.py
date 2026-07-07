@@ -6,19 +6,25 @@ from shapely.ops import split
 from shapely import Point
 import datetime as dt
 import statsmodels.api as sm
+from pathlib import Path
 
-data_path = "/home/annegret/Projects/Hubbard2024/data/terminus_data/"     # folder where all the data for terminus position and terminus sections is stored
-fig_path  = "/home/annegret/Projects/Hubbard2024/terminus_change/figures/"           # folder to save figures
+# define data paths relative to this script's location
+script_dir = Path(__file__).resolve().parent
+project_root = script_dir.parent
+terminus_data_path = project_root / "data" / "terminus_data" / ""  # folder where all the data for terminus position and terminus sections is stored
+fig_path  = project_root / "terminus_change" / "figures" / ""      # folder to save figures
 
 # read in terminus traces (UTM07)
-terminus_path = data_path + "Hubbard_2017_2021_UTM07.gpkg"
-df_terminus = gpd.read_file(terminus_path)   # df_terminus.geometry is already in LineString format
+terminus_file = terminus_data_path / "Hubbard_terminus_2017_2022.gpkg"
+df_terminus = gpd.read_file(terminus_file)   # df_terminus.geometry is already in LineString format
+df_terminus.Date = pd.to_datetime(df_terminus.Date)
+
 # Mcnabb terminus data
-terminus_mcnabb_path = data_path + "Hubbard_McNabb.gpkg"
+terminus_mcnabb_path = terminus_data_path / "Hubbard_McNabb.gpkg"
 df_terminus_mcnabb = gpd.read_file(terminus_mcnabb_path)
 
 # read in section polygons
-path_sections = data_path + "terminus_sections_rectangle.gpkg"
+path_sections = terminus_data_path / "terminus_sections_rectangle.gpkg"
 df_sec = gpd.read_file(path_sections) # df_sA.geometry is already in Polygon format
 df_sec = df_sec.to_crs(df_terminus.crs)
 df_sec.sort_values(by=["section"], inplace=True)
@@ -76,7 +82,7 @@ for (day, terminus_line) in zip(df_terminus.Date, df_terminus.geometry):
     list_areas.append(newrow)
 # save polygons with glacier part of sections
 gdf_small_polygons = gpd.GeoDataFrame(list_small_polygons, crs=df_sec.crs)
-gdf_small_polygons.to_file(data_path+"section_polygons_glacier_only.gpkg", driver="GPKG")
+gdf_small_polygons.to_file(terminus_data_path / "section_polygons_glacier_only.gpkg", driver="GPKG")
 
 # add McNabb terminus lines (for long term trend, don't help much for seasonal variability)
 # for (yr, day, terminus_line) in zip(df_terminus_mcnabb.year, df_terminus_mcnabb.doy, df_terminus_mcnabb.geometry):
@@ -112,4 +118,4 @@ for (s,c) in zip(df_sec.section,cols):
     df_terminus_smooth[s+" [m]"] = z
 
 # save smoothed time series
-df_terminus_smooth.to_csv(data_path+"terminus_position_smooth.csv", index=False)
+df_terminus_smooth.to_csv(terminus_data_path / "terminus_position_smooth.csv", index=False)
